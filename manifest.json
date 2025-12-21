@@ -1,36 +1,55 @@
 {
-  "name": "Ferretería Carnevale Móvil",
+  "name": "Ferretería Carnevale",
   "short_name": "Ferretería",
-  "description": "App móvil para reporte de faltantes - Ferretería Carnevale",
-  "start_url": "/index_mobile.html",
+  "description": "Sistema de gestión de faltantes para Ferretería Carnevale",
+  "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#667eea",
   "theme_color": "#667eea",
-  "orientation": "portrait",
+  "orientation": "portrait-primary",
   "icons": [
     {
       "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏗️</text></svg>",
       "sizes": "any",
-      "type": "image/svg+xml"
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
     },
     {
-      "src": "https://cdn-icons-png.flaticon.com/512/3067/3067256.png",
+      "src": "https://via.placeholder.com/192x192/667eea/ffffff?text=🏗️",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
-      "src": "https://cdn-icons-png.flaticon.com/512/3067/3067256.png",
+      "src": "https://via.placeholder.com/512x512/667eea/ffffff?text=🏗️",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ],
+  "scope": "./",
+  "prefer_related_applications": false,
   "categories": ["business", "productivity"],
-  "screenshots": [
+  "shortcuts": [
     {
-      "src": "https://via.placeholder.com/540x720/667eea/ffffff?text=Ferreter%C3%ADa+M%C3%B3vil",
-      "sizes": "540x720",
-      "type": "image/png",
-      "form_factor": "narrow"
+      "name": "Reportar Faltante",
+      "short_name": "Reportar",
+      "description": "Reportar nuevo faltante",
+      "url": "./index.html?page=faltante",
+      "icons": [{
+        "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚠️</text></svg>",
+        "sizes": "96x96"
+      }]
+    },
+    {
+      "name": "Ver Faltantes",
+      "short_name": "Faltantes",
+      "description": "Ver faltantes pendientes",
+      "url": "./index.html?page=lista",
+      "icons": [{
+        "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📋</text></svg>",
+        "sizes": "96x96"
+      }]
     }
   ]
 }
