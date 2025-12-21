@@ -241,12 +241,20 @@
             font-size: 15px;
         }
 
+        .autocomplete-item:hover,
         .autocomplete-item:active {
             background: #f8f9fa;
         }
 
         .autocomplete-item:last-child {
             border-bottom: none;
+        }
+
+        .autocomplete-item .proveedor-info {
+            display: block;
+            font-size: 12px;
+            color: #666;
+            margin-top: 4px;
         }
 
         /* ===== LISTA DE FALTANTES ===== */
@@ -677,7 +685,7 @@
                 </div>
             </div>
 
-            <!-- Página 2: Reportar Faltante - CORREGIDA -->
+            <!-- Página 2: Reportar Faltante - CON AUTOCOMPLETADO DE PROVEEDORES -->
             <div id="page-faltante" class="page">
                 <div class="card">
                     <h2 class="card-title">⚠️ Reportar Faltante</h2>
@@ -699,16 +707,26 @@
                             <span id="textoMensaje"></span>
                         </div>
 
-                        <!-- Campos para PROVEEDOR (APARECE CUANDO ES PRODUCTO NUEVO) -->
+                        <!-- Campos para PROVEEDOR (APARECE CUANDO ES PRODUCTO NUEVO O PRODUCTO SIN PROVEEDOR) -->
                         <div id="camposProveedorNuevo" class="nuevo-proveedor-container hidden">
                             <div class="nuevo-proveedor-title">
-                                📝 Proveedor para producto nuevo
+                                📝 Datos del Proveedor
+                                <span style="font-size: 11px; color: #666; font-weight: normal; margin-left: auto;">
+                                    ⚡ Usa proveedores existentes
+                                </span>
                             </div>
                             
+                            <!-- NOMBRE DEL PROVEEDOR CON AUTOCOMPLETADO -->
                             <div class="form-group">
                                 <label class="form-label">Nombre del Proveedor *</label>
-                                <input type="text" id="nuevoProveedorNombre" class="form-input" 
-                                       placeholder="Ej: Proveedor S.A.">
+                                <div class="autocomplete-container">
+                                    <input type="text" id="nuevoProveedorNombre" class="form-input" 
+                                           placeholder="Escribe para buscar proveedores..." autocomplete="off">
+                                    <div id="proveedorDropdown" class="autocomplete-list"></div>
+                                </div>
+                                <small style="color: #666; display: block; margin-top: 5px;">
+                                    ⚡ Selecciona un proveedor existente o escribe uno nuevo
+                                </small>
                             </div>
                             
                             <div class="form-group">
@@ -717,6 +735,8 @@
                                     <option value="WhatsApp">📱 WhatsApp</option>
                                     <option value="Web">🌐 Web</option>
                                     <option value="Manual">📞 Manual</option>
+                                    <option value="Email">📧 Email</option>
+                                    <option value="Teléfono">☎️ Teléfono</option>
                                 </select>
                             </div>
                             
@@ -726,8 +746,8 @@
                                        placeholder="Ej: 11 1234-5678 o https://proveedor.com">
                             </div>
                             
-                            <div style="font-size: 12px; color: #666; margin-top: 10px;">
-                                💡 Este proveedor se guardará para futuros pedidos
+                            <div style="font-size: 12px; color: #666; margin-top: 10px; padding: 10px; background: #e8f5e9; border-radius: 8px;">
+                                💡 <strong>Tip:</strong> Si seleccionas un proveedor existente, los campos de medio y contacto se llenarán automáticamente
                             </div>
                         </div>
 
@@ -776,7 +796,8 @@
                     <h2 class="card-title">💡 Instrucciones</h2>
                     <p style="color: #666; line-height: 1.5;">
                         <strong>Para productos existentes:</strong> Solo escribe el nombre y selecciona de la lista.<br>
-                        <strong>Para productos nuevos:</strong> Escribe el nombre completo y completa los datos del proveedor que aparecerán.
+                        <strong>Para productos nuevos:</strong> Escribe el nombre completo y completa los datos del proveedor.<br>
+                        <strong>Para proveedores:</strong> Escribe en el campo del proveedor para ver la lista de proveedores existentes.
                     </p>
                 </div>
             </div>
@@ -874,35 +895,91 @@
         </nav>
     </div>
 
-    <!-- Service Worker Registration -->
+    <!-- Service Worker Registration - MEJORADO PARA PWA -->
     <script>
         // ============================================================================
-        // CONFIGURACIÓN PWA
+        // CONFIGURACIÓN PWA MEJORADA
         // ============================================================================
+        
+        // Verificar si estamos en HTTPS
         if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw-mobile.js')
-                    .then(registration => {
-                        console.log('ServiceWorker registrado:', registration.scope);
-                    })
-                    .catch(error => {
-                        console.log('ServiceWorker falló:', error);
-                        // Si falla, solo mostramos un mensaje en consola
-                    });
+            window.addEventListener('load', function() {
+                // Intentar registrar el service worker con diferentes rutas
+                const registerServiceWorker = async () => {
+                    try {
+                        // Intentar desde la raíz
+                        let registration = await navigator.serviceWorker.register('sw-mobile.js', {
+                            scope: './'
+                        });
+                        
+                        console.log('ServiceWorker registrado exitosamente:', registration.scope);
+                        
+                        // Verificar si hay una nueva versión
+                        registration.addEventListener('updatefound', () => {
+                            const newWorker = registration.installing;
+                            console.log('Nueva versión del ServiceWorker encontrada');
+                            
+                            newWorker.addEventListener('statechange', () => {
+                                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                    console.log('Nueva versión lista. Recargar para actualizar.');
+                                    // Puedes mostrar un botón para recargar
+                                }
+                            });
+                        });
+                        
+                        return registration;
+                    } catch (error) {
+                        console.log('ServiceWorker registro falló:', error);
+                        // No mostrar error al usuario, la app funcionará sin service worker
+                    }
+                };
+                
+                // Registrar el service worker
+                registerServiceWorker();
             });
+        } else {
+            console.log('ServiceWorker no soportado');
         }
 
         // Detectar si la app puede instalarse
         let deferredPrompt;
         window.addEventListener('beforeinstallprompt', (e) => {
-            // Prevenir el prompt automático
             e.preventDefault();
             deferredPrompt = e;
             
-            // Mostrar nuestro prompt personalizado después de 5 segundos
+            // Solo mostrar el prompt si estamos en modo navegador, no en standalone
+            if (!window.matchMedia('(display-mode: standalone)').matches) {
+                setTimeout(() => {
+                    mostrarInstalacion();
+                }, 3000);
+            }
+        });
+
+        // Detectar el modo de visualización
+        function getDisplayMode() {
+            if (window.matchMedia('(display-mode: standalone)').matches) {
+                return 'standalone';
+            }
+            if (window.navigator.standalone) {
+                return 'standalone';
+            }
+            if (document.referrer.includes('android-app://')) {
+                return 'twa';
+            }
+            return 'browser';
+        }
+
+        // Cuando la app se instala
+        window.addEventListener('appinstalled', () => {
+            console.log('App instalada exitosamente');
+            ocultarInstalacion();
+            
+            // Opcional: Redirigir a la página principal después de instalar
             setTimeout(() => {
-                mostrarInstalacion();
-            }, 5000);
+                if (window.location.href.includes('?')) {
+                    window.location.href = './';
+                }
+            }, 1000);
         });
     </script>
 
@@ -969,11 +1046,33 @@
             ocultarInstalacion();
         }
 
-        // Detectar si la app está instalada
-        window.addEventListener('appinstalled', () => {
-            console.log('PWA instalada');
-            ocultarInstalacion();
-        });
+        // ============================================================================
+        // MANEJO DE RUTAS PARA PWA - EVITAR 404
+        // ============================================================================
+        function manejarRutasPWA() {
+            // Verificar si estamos en modo standalone
+            const displayMode = getDisplayMode();
+            console.log('Modo de visualización:', displayMode);
+            
+            // Manejar parámetros de URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const paginaParam = urlParams.get('page');
+            
+            if (paginaParam) {
+                // Navegar a la página especificada en el parámetro
+                setTimeout(() => {
+                    navegarA(paginaParam);
+                }, 500);
+            }
+            
+            // Si hay un hash en la URL, navegar a la sección correspondiente
+            if (window.location.hash) {
+                const hash = window.location.hash.replace('#', '');
+                setTimeout(() => {
+                    navegarA(hash);
+                }, 500);
+            }
+        }
 
         // ============================================================================
         // FUNCIONES DE UTILIDAD
@@ -1152,6 +1251,9 @@
             configurarListenersTiempoReal();
             actualizarDashboard();
             cargarFaltantes();
+            
+            // Manejar rutas para PWA
+            manejarRutasPWA();
         }
 
         async function cargarDatosIniciales() {
@@ -1194,10 +1296,10 @@
                     snapshot.forEach(doc => {
                         productos.push({ id: doc.id, ...doc.data() });
                     });
-                    configurarAutocompletado();
+                    configurarAutocompletadoProductos();
                 });
             
-            // Escuchar proveedores
+            // Escuchar proveedores - ¡ESTO ES CLAVE PARA EL AUTOCOMPLETADO!
             db.collection('proveedores')
                 .where('activo', '==', true)
                 .onSnapshot((snapshot) => {
@@ -1205,6 +1307,9 @@
                     snapshot.forEach(doc => {
                         proveedores.push({ id: doc.id, ...doc.data() });
                     });
+                    
+                    // Configurar autocompletado de proveedores cada vez que se actualizan
+                    configurarAutocompletadoProveedores();
                 });
             
             // Escuchar faltantes (SIN orderBy para evitar índices)
@@ -1262,6 +1367,14 @@
             
             // Scroll al inicio
             window.scrollTo(0, 0);
+            
+            // Si vamos a la página de reportar, configurar autocompletado
+            if (pagina === 'faltante') {
+                setTimeout(() => {
+                    configurarAutocompletadoProductos();
+                    configurarAutocompletadoProveedores();
+                }, 100);
+            }
         }
 
         function actualizarDatos() {
@@ -1334,71 +1447,75 @@
         // ============================================================================
         // AUTOCOMPLETADO DE PRODUCTOS - CORREGIDO (NO MUEVE EL FOCO)
         // ============================================================================
-        function configurarAutocompletado() {
+        function configurarAutocompletadoProductos() {
             const input = document.getElementById('faltanteProducto');
-            const dropdown = document.getElementById('productoDropdown');
-            
             if (!input) return;
             
             input.addEventListener('input', function(e) {
-                const valor = e.target.value;
+                const valor = e.target.value.trim();
+                const dropdown = document.getElementById('productoDropdown');
                 
                 // Ocultar mensaje anterior
                 document.getElementById('mensajeProducto').classList.add('hidden');
                 document.getElementById('camposProveedorNuevo').classList.add('hidden');
                 
-                // Validar que no esté vacío después de trim
-                const valorTrim = valor.trim();
-                
-                if (!valorTrim || valorTrim.length < 2) {
-                    dropdown.classList.remove('active');
-                    return;
-                }
-                
-                // Validar que no sean solo espacios
-                if (valorTrim.replace(/\s+/g, '').length === 0) {
+                if (!valor || valor.length < 2 || valor.replace(/\s+/g, '').length === 0) {
                     dropdown.classList.remove('active');
                     return;
                 }
                 
                 const resultados = productos.filter(p => 
-                    p.nombre && p.nombre.toLowerCase().includes(valorTrim.toLowerCase())
-                );
+                    p.nombre && p.nombre.toLowerCase().includes(valor.toLowerCase())
+                ).slice(0, 5); // Limitar a 5 resultados
                 
                 if (resultados.length > 0) {
-                    mostrarResultadosAutocompletado(resultados);
+                    mostrarResultadosAutocompletadoProductos(resultados, valor);
                 } else {
                     dropdown.classList.remove('active');
-                    mostrarMensajeProductoNuevo(valorTrim);
+                    mostrarMensajeProductoNuevo(valor);
                 }
             });
             
             // Cerrar dropdown al hacer clic fuera
             document.addEventListener('click', (e) => {
-                if (!input.contains(e.target) && !dropdown.contains(e.target)) {
+                const dropdown = document.getElementById('productoDropdown');
+                if (dropdown && !input.contains(e.target) && !dropdown.contains(e.target)) {
                     dropdown.classList.remove('active');
                 }
             });
         }
 
-        function mostrarResultadosAutocompletado(resultados) {
+        function mostrarResultadosAutocompletadoProductos(resultados, busqueda) {
             const dropdown = document.getElementById('productoDropdown');
             if (!dropdown) return;
             
             dropdown.innerHTML = '';
             
-            resultados.slice(0, 5).forEach(producto => {
-                // Asegurarnos de que el producto tenga nombre
-                if (!producto.nombre || producto.nombre.trim().length === 0) {
-                    return; // Saltar productos sin nombre
-                }
+            resultados.forEach(producto => {
+                if (!producto.nombre || producto.nombre.trim().length === 0) return;
                 
                 const div = document.createElement('div');
                 div.className = 'autocomplete-item';
-                div.textContent = producto.nombre;
                 
+                // Destacar la parte que coincide con la búsqueda
+                const nombre = producto.nombre;
+                const nombreLower = nombre.toLowerCase();
+                const busquedaLower = busqueda.toLowerCase();
+                const indice = nombreLower.indexOf(busquedaLower);
+                
+                if (indice !== -1) {
+                    const parte1 = nombre.substring(0, indice);
+                    const parte2 = nombre.substring(indice, indice + busqueda.length);
+                    const parte3 = nombre.substring(indice + busqueda.length);
+                    
+                    div.innerHTML = `${parte1}<strong>${parte2}</strong>${parte3}`;
+                } else {
+                    div.textContent = nombre;
+                }
+                
+                // Agregar información del proveedor si existe
                 if (producto.proveedor) {
-                    div.innerHTML = `${producto.nombre} <small style="color:#666;">(${producto.proveedor})</small>`;
+                    div.innerHTML += `<span class="proveedor-info">Proveedor: ${producto.proveedor} | Medio: ${producto.medio || 'WhatsApp'}</span>`;
                 }
                 
                 div.addEventListener('click', () => {
@@ -1424,23 +1541,21 @@
             document.getElementById('productoExistenteMedio').value = producto.medio || 'WhatsApp';
             document.getElementById('productoExistenteContacto').value = producto.contacto || '';
             
-            // Ocultar campos de proveedor nuevo
-            document.getElementById('camposProveedorNuevo').classList.add('hidden');
-            
-            // Mostrar mensaje
-            const mensajeDiv = document.getElementById('mensajeProducto');
-            mensajeDiv.classList.remove('hidden');
-            mensajeDiv.style.background = '#e8f5e9';
-            
-            if (producto.proveedor) {
+            // Mostrar campos de proveedor si el producto no tiene proveedor
+            if (!producto.proveedor) {
+                mostrarMensajeProductoNuevo(producto.nombre);
+            } else {
+                // Ocultar campos de proveedor nuevo
+                document.getElementById('camposProveedorNuevo').classList.add('hidden');
+                
+                // Mostrar mensaje
+                const mensajeDiv = document.getElementById('mensajeProducto');
+                mensajeDiv.classList.remove('hidden');
+                mensajeDiv.style.background = '#e8f5e9';
+                
                 document.getElementById('textoMensaje').innerHTML = `
                     ✅ Producto encontrado<br>
                     <small>Proveedor: ${producto.proveedor} | Medio: ${producto.medio || 'WhatsApp'}</small>
-                `;
-            } else {
-                document.getElementById('textoMensaje').innerHTML = `
-                    ✅ Producto encontrado<br>
-                    <small>No tiene proveedor asignado</small>
                 `;
             }
         }
@@ -1450,24 +1565,187 @@
             mensajeDiv.classList.remove('hidden');
             mensajeDiv.style.background = '#e3f2fd';
             document.getElementById('textoMensaje').innerHTML = `
-                ✨ Producto nuevo<br>
-                <small>Completa los datos del proveedor cuando termines de escribir</small>
+                ✨ ${valor ? 'Producto nuevo' : 'Producto sin proveedor'}<br>
+                <small>Completa los datos del proveedor</small>
             `;
             
-            // Mostrar campos de proveedor nuevo PERO NO MOVER EL FOCO
-            document.getElementById('camposProveedorNuevo').classList.remove('hidden');
+            // Mostrar campos de proveedor nuevo
+            const camposProveedor = document.getElementById('camposProveedorNuevo');
+            camposProveedor.classList.remove('hidden');
             
-            // Resetear campos de proveedor nuevo
-            document.getElementById('nuevoProveedorNombre').value = '';
-            document.getElementById('nuevoProveedorMedio').value = 'WhatsApp';
-            document.getElementById('nuevoProveedorContacto').value = '';
+            // Si el producto ya tenía un nombre, ponerlo en el campo del proveedor
+            const proveedorInput = document.getElementById('nuevoProveedorNombre');
+            const proveedorExistente = document.getElementById('productoExistenteProveedor').value;
             
-            // ¡IMPORTANTE! NO MOVER EL FOCO - El usuario puede seguir escribiendo
-            // Quitamos completamente el setTimeout que movía el foco
+            if (proveedorExistente) {
+                proveedorInput.value = proveedorExistente;
+                // También actualizar los otros campos si existen
+                document.getElementById('nuevoProveedorMedio').value = document.getElementById('productoExistenteMedio').value || 'WhatsApp';
+                document.getElementById('nuevoProveedorContacto').value = document.getElementById('productoExistenteContacto').value || '';
+            } else {
+                proveedorInput.value = '';
+                document.getElementById('nuevoProveedorMedio').value = 'WhatsApp';
+                document.getElementById('nuevoProveedorContacto').value = '';
+            }
+            
+            // Enfocar el campo del proveedor
+            setTimeout(() => {
+                proveedorInput.focus();
+            }, 300);
         }
 
         // ============================================================================
-        // GUARDAR FALTANTE - CORREGIDO
+        // AUTOCOMPLETADO DE PROVEEDORES - NUEVA FUNCIONALIDAD
+        // ============================================================================
+        function configurarAutocompletadoProveedores() {
+            const input = document.getElementById('nuevoProveedorNombre');
+            if (!input) return;
+            
+            // Eliminar event listeners anteriores para evitar duplicados
+            const newInput = input.cloneNode(true);
+            input.parentNode.replaceChild(newInput, input);
+            document.getElementById('nuevoProveedorNombre').addEventListener('input', manejarBusquedaProveedores);
+            
+            // También configurar para cuando se hace clic (mostrar todos los proveedores)
+            document.getElementById('nuevoProveedorNombre').addEventListener('click', function(e) {
+                if (this.value.length === 0) {
+                    mostrarTodosLosProveedores();
+                }
+            });
+            
+            // Cerrar dropdown al hacer clic fuera
+            document.addEventListener('click', (e) => {
+                const dropdown = document.getElementById('proveedorDropdown');
+                const proveedorInput = document.getElementById('nuevoProveedorNombre');
+                if (dropdown && !proveedorInput.contains(e.target) && !dropdown.contains(e.target)) {
+                    dropdown.classList.remove('active');
+                }
+            });
+        }
+
+        function manejarBusquedaProveedores(e) {
+            const valor = e.target.value.trim();
+            const dropdown = document.getElementById('proveedorDropdown');
+            
+            if (!valor || valor.length < 1) {
+                if (valor.length === 0) {
+                    mostrarTodosLosProveedores();
+                } else {
+                    dropdown.classList.remove('active');
+                }
+                return;
+            }
+            
+            // Filtrar proveedores que coincidan con la búsqueda
+            const resultados = proveedores.filter(p => 
+                p.nombre && p.nombre.toLowerCase().includes(valor.toLowerCase())
+            ).slice(0, 8); // Limitar a 8 resultados
+            
+            if (resultados.length > 0) {
+                mostrarResultadosAutocompletadoProveedores(resultados, valor);
+            } else {
+                dropdown.classList.remove('active');
+            }
+        }
+
+        function mostrarTodosLosProveedores() {
+            const dropdown = document.getElementById('proveedorDropdown');
+            if (!dropdown) return;
+            
+            // Mostrar todos los proveedores (limitado a 10)
+            const todosProveedores = proveedores.slice(0, 10);
+            
+            if (todosProveedores.length > 0) {
+                mostrarResultadosAutocompletadoProveedores(todosProveedores, '');
+            } else {
+                dropdown.classList.remove('active');
+            }
+        }
+
+        function mostrarResultadosAutocompletadoProveedores(resultados, busqueda) {
+            const dropdown = document.getElementById('proveedorDropdown');
+            if (!dropdown) return;
+            
+            dropdown.innerHTML = '';
+            
+            // Agregar encabezado
+            const header = document.createElement('div');
+            header.style.padding = '10px 15px';
+            header.style.fontSize = '12px';
+            header.style.color = '#666';
+            header.style.borderBottom = '1px solid #f0f0f0';
+            header.style.background = '#f8f9fa';
+            header.innerHTML = `<strong>Proveedores existentes (${resultados.length})</strong>`;
+            dropdown.appendChild(header);
+            
+            resultados.forEach(proveedor => {
+                if (!proveedor.nombre || proveedor.nombre.trim().length === 0) return;
+                
+                const div = document.createElement('div');
+                div.className = 'autocomplete-item';
+                
+                // Destacar la parte que coincide con la búsqueda
+                const nombre = proveedor.nombre;
+                const nombreLower = nombre.toLowerCase();
+                const busquedaLower = busqueda.toLowerCase();
+                const indice = nombreLower.indexOf(busquedaLower);
+                
+                if (indice !== -1 && busqueda) {
+                    const parte1 = nombre.substring(0, indice);
+                    const parte2 = nombre.substring(indice, indice + busqueda.length);
+                    const parte3 = nombre.substring(indice + busqueda.length);
+                    
+                    div.innerHTML = `${parte1}<strong>${parte2}</strong>${parte3}`;
+                } else {
+                    div.textContent = nombre;
+                }
+                
+                // Agregar información adicional del proveedor
+                let info = '';
+                if (proveedor.medio) info += `Medio: ${proveedor.medio}`;
+                if (proveedor.contacto) {
+                    if (info) info += ' | ';
+                    const contactoCorto = proveedor.contacto.length > 20 ? 
+                        proveedor.contacto.substring(0, 20) + '...' : proveedor.contacto;
+                    info += `Contacto: ${contactoCorto}`;
+                }
+                
+                if (info) {
+                    div.innerHTML += `<span class="proveedor-info">${info}</span>`;
+                }
+                
+                div.addEventListener('click', () => {
+                    seleccionarProveedor(proveedor);
+                });
+                
+                dropdown.appendChild(div);
+            });
+            
+            dropdown.classList.add('active');
+        }
+
+        function seleccionarProveedor(proveedor) {
+            const input = document.getElementById('nuevoProveedorNombre');
+            const dropdown = document.getElementById('proveedorDropdown');
+            
+            input.value = proveedor.nombre;
+            dropdown.classList.remove('active');
+            
+            // Rellenar automáticamente los otros campos si están disponibles
+            if (proveedor.medio) {
+                document.getElementById('nuevoProveedorMedio').value = proveedor.medio;
+            }
+            
+            if (proveedor.contacto) {
+                document.getElementById('nuevoProveedorContacto').value = proveedor.contacto;
+            }
+            
+            // Mostrar notificación
+            mostrarNotificacion(`Proveedor "${proveedor.nombre}" seleccionado`, 'success', 2000);
+        }
+
+        // ============================================================================
+        // GUARDAR FALTANTE - MEJORADO CON AUTOCOMPLETADO DE PROVEEDORES
         // ============================================================================
         async function guardarFaltante(event) {
             event.preventDefault();
@@ -1484,23 +1762,9 @@
             const sucursal = document.getElementById('faltanteSucursal').value;
             const productoId = document.getElementById('productoExistenteId').value;
             
-            // Validar que el producto no esté vacío después de quitar espacios
-            if (!producto) {
-                mostrarNotificacion('El nombre del producto no puede estar vacío', 'error');
-                document.getElementById('faltanteProducto').focus();
-                return;
-            }
-            
-            // Validar que el producto no contenga solo espacios
-            if (producto.replace(/\s+/g, '').length === 0) {
-                mostrarNotificacion('El nombre del producto no puede contener solo espacios', 'error');
-                document.getElementById('faltanteProducto').focus();
-                return;
-            }
-            
-            // Validar longitud mínima del nombre del producto
-            if (producto.length < 2) {
-                mostrarNotificacion('El nombre del producto debe tener al menos 2 caracteres', 'error');
+            // Validar producto
+            if (!producto || producto.replace(/\s+/g, '').length === 0 || producto.length < 2) {
+                mostrarNotificacion('El nombre del producto es inválido', 'error');
                 document.getElementById('faltanteProducto').focus();
                 return;
             }
@@ -1522,12 +1786,49 @@
                 return;
             }
             
+            // Obtener datos del proveedor (de campos nuevos o existentes)
+            let proveedorNombre = '';
+            let proveedorMedio = '';
+            let proveedorContacto = '';
+            
+            // Si es producto existente con proveedor
+            if (productoId && document.getElementById('productoExistenteProveedor').value) {
+                proveedorNombre = document.getElementById('productoExistenteProveedor').value;
+                proveedorMedio = document.getElementById('productoExistenteMedio').value || 'WhatsApp';
+                proveedorContacto = document.getElementById('productoExistenteContacto').value || '';
+            }
+            
+            // Si no tiene proveedor o los campos de proveedor nuevo están visibles
+            const camposProveedorVisible = !document.getElementById('camposProveedorNuevo').classList.contains('hidden');
+            
+            if (!proveedorNombre || camposProveedorVisible) {
+                proveedorNombre = document.getElementById('nuevoProveedorNombre').value.trim();
+                proveedorMedio = document.getElementById('nuevoProveedorMedio').value;
+                proveedorContacto = document.getElementById('nuevoProveedorContacto').value.trim();
+            }
+            
+            // Validar datos del proveedor
+            if (!proveedorNombre) {
+                mostrarNotificacion('El nombre del proveedor es requerido', 'error');
+                document.getElementById('nuevoProveedorNombre').focus();
+                return;
+            }
+            
+            if (!proveedorContacto) {
+                mostrarNotificacion('El contacto del proveedor es requerido', 'error');
+                document.getElementById('nuevoProveedorContacto').focus();
+                return;
+            }
+            
             // Preparar datos del faltante
             const faltanteData = {
                 producto: producto,
                 cantidad: cantidad,
                 estadoStock: estadoStock,
                 sucursal: sucursal,
+                proveedor: proveedorNombre,
+                medio: proveedorMedio,
+                contacto: proveedorContacto,
                 estadoFaltante: 'Pendiente',
                 fechaReporte: firebase.firestore.FieldValue.serverTimestamp(),
                 usuarioReporte: usuarioActual.email,
@@ -1535,47 +1836,14 @@
                 idPedido: null
             };
             
-            // SI ES PRODUCTO EXISTENTE: Usar datos existentes
-            if (productoId) {
-                faltanteData.proveedor = document.getElementById('productoExistenteProveedor').value || '';
-                faltanteData.medio = document.getElementById('productoExistenteMedio').value || 'WhatsApp';
-                faltanteData.contacto = document.getElementById('productoExistenteContacto').value || '';
+            mostrarLoading(true, 'Guardando faltante...');
+            
+            try {
+                // 1. Guardar el faltante
+                await db.collection('faltantes').add(faltanteData);
                 
-                // Si el producto existe pero no tiene proveedor, usar los campos de proveedor nuevo si están completos
-                if (!faltanteData.proveedor) {
-                    const proveedorNombre = document.getElementById('nuevoProveedorNombre').value.trim();
-                    if (proveedorNombre) {
-                        faltanteData.proveedor = proveedorNombre;
-                        faltanteData.medio = document.getElementById('nuevoProveedorMedio').value || 'WhatsApp';
-                        faltanteData.contacto = document.getElementById('nuevoProveedorContacto').value || '';
-                    }
-                }
-            } 
-            // SI ES PRODUCTO NUEVO: Capturar datos del proveedor
-            else {
-                const proveedorNombre = document.getElementById('nuevoProveedorNombre').value.trim();
-                const proveedorContacto = document.getElementById('nuevoProveedorContacto').value.trim();
-                const proveedorMedio = document.getElementById('nuevoProveedorMedio').value;
-                
-                // Validar datos del proveedor
-                if (!proveedorNombre) {
-                    mostrarNotificacion('El nombre del proveedor es requerido para productos nuevos', 'error');
-                    document.getElementById('nuevoProveedorNombre').focus();
-                    return;
-                }
-                
-                if (!proveedorContacto) {
-                    mostrarNotificacion('El contacto del proveedor es requerido', 'error');
-                    document.getElementById('nuevoProveedorContacto').focus();
-                    return;
-                }
-                
-                faltanteData.proveedor = proveedorNombre;
-                faltanteData.medio = proveedorMedio;
-                faltanteData.contacto = proveedorContacto;
-                
-                // CREAR PRODUCTO EN EL CATÁLOGO
-                try {
+                // 2. Si es producto nuevo (sin ID), crear en catálogo
+                if (!productoId) {
                     const productoData = {
                         nombre: producto,
                         proveedor: proveedorNombre,
@@ -1586,41 +1854,24 @@
                     };
                     
                     await db.collection('productos').add(productoData);
-                    
-                    // VERIFICAR Y CREAR PROVEEDOR SI NO EXISTE
-                    const proveedorExistente = proveedores.find(p => 
-                        p.nombre && p.nombre.toLowerCase() === proveedorNombre.toLowerCase()
-                    );
-                    
-                    if (!proveedorExistente) {
-                        const proveedorData = {
-                            nombre: proveedorNombre,
-                            medio: proveedorMedio,
-                            contacto: proveedorContacto,
-                            activo: true,
-                            fechaCreacion: firebase.firestore.FieldValue.serverTimestamp()
-                        };
-                        
-                        await db.collection('proveedores').add(proveedorData);
-                    }
-                    
-                } catch (error) {
-                    console.error('Error creando producto/proveedor:', error);
-                    // Continuamos aunque falle la creación del producto/proveedor
                 }
-            }
-            
-            // Validar que al menos tengamos proveedor
-            if (!faltanteData.proveedor) {
-                mostrarNotificacion('El proveedor es requerido. Si el producto existe pero no tiene proveedor, complétalo en los campos de "Proveedor para producto nuevo".', 'error');
-                document.getElementById('nuevoProveedorNombre').focus();
-                return;
-            }
-            
-            mostrarLoading(true, 'Guardando faltante...');
-            
-            try {
-                await db.collection('faltantes').add(faltanteData);
+                
+                // 3. Verificar y crear proveedor si no existe
+                const proveedorExistente = proveedores.find(p => 
+                    p.nombre && p.nombre.toLowerCase() === proveedorNombre.toLowerCase()
+                );
+                
+                if (!proveedorExistente) {
+                    const proveedorData = {
+                        nombre: proveedorNombre,
+                        medio: proveedorMedio,
+                        contacto: proveedorContacto,
+                        activo: true,
+                        fechaCreacion: firebase.firestore.FieldValue.serverTimestamp()
+                    };
+                    
+                    await db.collection('proveedores').add(proveedorData);
+                }
                 
                 mostrarNotificacion('✅ Faltante reportado correctamente');
                 limpiarFormularioFaltante();
@@ -1630,7 +1881,7 @@
                     fecha: firebase.firestore.FieldValue.serverTimestamp(),
                     usuario: usuarioActual.email,
                     accion: 'Reportar Faltante (Móvil)',
-                    detalle: `${producto} x${cantidad} | Proveedor: ${faltanteData.proveedor}`,
+                    detalle: `${producto} x${cantidad} | Proveedor: ${proveedorNombre}`,
                     sucursal: sucursal
                 });
                 
@@ -1663,13 +1914,14 @@
             document.getElementById('nuevoProveedorMedio').value = 'WhatsApp';
             document.getElementById('nuevoProveedorContacto').value = '';
             
+            // Enfocar campo de producto
             setTimeout(() => {
                 document.getElementById('faltanteProducto').focus();
             }, 100);
         }
 
         // ============================================================================
-        // LISTA DE FALTANTES - MEJORADA
+        // LISTA DE FALTANTES
         // ============================================================================
         async function cargarFaltantes() {
             try {
@@ -1740,6 +1992,7 @@
                 const fecha = formatearFecha(faltante.fechaReporte);
                 const proveedor = faltante.proveedor || 'Sin proveedor';
                 const medio = faltante.medio || 'WhatsApp';
+                const contacto = faltante.contacto || 'Sin contacto';
                 
                 html += `
                     <div class="faltante-item ${esSinStock ? 'sin-stock' : ''}">
@@ -1753,6 +2006,7 @@
                             <strong>Cantidad:</strong> ${faltante.cantidad || 1}<br>
                             <strong>Proveedor:</strong> ${proveedor}<br>
                             <strong>Medio:</strong> ${medio}<br>
+                            <strong>Contacto:</strong> ${contacto.length > 30 ? contacto.substring(0, 30) + '...' : contacto}<br>
                             <strong>Reportado:</strong> ${fecha}
                         </div>
                     </div>
@@ -1793,6 +2047,7 @@
                 const fecha = formatearFecha(faltante.fechaReporte);
                 const proveedor = faltante.proveedor || 'Sin proveedor';
                 const medio = faltante.medio || 'WhatsApp';
+                const contacto = faltante.contacto || 'Sin contacto';
                 
                 html += `
                     <div class="faltante-item ${esSinStock ? 'sin-stock' : ''}">
@@ -1806,6 +2061,7 @@
                             <strong>Cantidad:</strong> ${faltante.cantidad || 1}<br>
                             <strong>Proveedor:</strong> ${proveedor}<br>
                             <strong>Medio:</strong> ${medio}<br>
+                            <strong>Contacto:</strong> ${contacto.length > 30 ? contacto.substring(0, 30) + '...' : contacto}<br>
                             <strong>Reportado:</strong> ${fecha}
                         </div>
                     </div>
@@ -1847,7 +2103,8 @@
             console.log('App móvil cargada');
             
             // Configurar autocompletado
-            configurarAutocompletado();
+            configurarAutocompletadoProductos();
+            configurarAutocompletadoProveedores();
             
             // Detectar tecla Enter en login
             document.getElementById('loginPassword').addEventListener('keypress', function(e) {
