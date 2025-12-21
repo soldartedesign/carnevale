@@ -685,7 +685,7 @@
                 </div>
             </div>
 
-            <!-- Página 2: Reportar Faltante - CON AUTOCOMPLETADO DE PROVEEDORES -->
+            <!-- Página 2: Reportar Faltante - CORREGIDA (NO MUEVE FOCO) -->
             <div id="page-faltante" class="page">
                 <div class="card">
                     <h2 class="card-title">⚠️ Reportar Faltante</h2>
@@ -702,7 +702,7 @@
                             </div>
                         </div>
 
-                        <!-- Mensaje de producto -->
+                        <!-- Mensaje de producto - SOLO INFORMATIVO, NO ACCIONABLE -->
                         <div id="mensajeProducto" class="hidden" style="margin: 10px 0; padding: 12px; border-radius: 10px; background: #e3f2fd;">
                             <span id="textoMensaje"></span>
                         </div>
@@ -747,7 +747,7 @@
                             </div>
                             
                             <div style="font-size: 12px; color: #666; margin-top: 10px; padding: 10px; background: #e8f5e9; border-radius: 8px;">
-                                💡 <strong>Tip:</strong> Si seleccionas un proveedor existente, los campos de medio y contacto se llenarán automáticamente
+                                💡 <strong>Tip:</strong> Termina de escribir el nombre del producto primero, luego completa estos campos
                             </div>
                         </div>
 
@@ -795,9 +795,10 @@
                 <div class="card">
                     <h2 class="card-title">💡 Instrucciones</h2>
                     <p style="color: #666; line-height: 1.5;">
-                        <strong>Para productos existentes:</strong> Solo escribe el nombre y selecciona de la lista.<br>
-                        <strong>Para productos nuevos:</strong> Escribe el nombre completo y completa los datos del proveedor.<br>
-                        <strong>Para proveedores:</strong> Escribe en el campo del proveedor para ver la lista de proveedores existentes.
+                        <strong>1. Escribe el nombre completo del producto</strong> - El foco se mantendrá aquí<br>
+                        <strong>2. Si el producto existe</strong> - Seleccionalo de la lista<br>
+                        <strong>3. Si es producto nuevo</strong> - Termina de escribir, luego ve a los campos de proveedor<br>
+                        <strong>4. Completa los datos del proveedor</strong> - Escribe para ver proveedores existentes
                     </p>
                 </div>
             </div>
@@ -983,10 +984,10 @@
         });
     </script>
 
-    <!-- Firebase y Lógica Principal -->
+    <!-- Firebase y Lógica Principal - CORREGIDO (NO MUEVE FOCO) -->
     <script>
         // ============================================================================
-        // CONFIGURACIÓN DE FIREBASE (MISMO QUE LA WEB)
+        // CONFIGURACIÓN DE FIREBASE
         // ============================================================================
         const firebaseConfig = {
             apiKey: "AIzaSyDIvu4JsAYAwccP9yTKERIzEtli2H86lSk",
@@ -1047,7 +1048,7 @@
         }
 
         // ============================================================================
-        // MANEJO DE RUTAS PARA PWA - EVITAR 404
+        // MANEJO DE RUTAS PARA PWA
         // ============================================================================
         function manejarRutasPWA() {
             // Verificar si estamos en modo standalone
@@ -1062,14 +1063,6 @@
                 // Navegar a la página especificada en el parámetro
                 setTimeout(() => {
                     navegarA(paginaParam);
-                }, 500);
-            }
-            
-            // Si hay un hash en la URL, navegar a la sección correspondiente
-            if (window.location.hash) {
-                const hash = window.location.hash.replace('#', '');
-                setTimeout(() => {
-                    navegarA(hash);
                 }, 500);
             }
         }
@@ -1299,7 +1292,7 @@
                     configurarAutocompletadoProductos();
                 });
             
-            // Escuchar proveedores - ¡ESTO ES CLAVE PARA EL AUTOCOMPLETADO!
+            // Escuchar proveedores
             db.collection('proveedores')
                 .where('activo', '==', true)
                 .onSnapshot((snapshot) => {
@@ -1384,7 +1377,7 @@
         }
 
         // ============================================================================
-        // DASHBOARD (SIN CONSULTAS COMPLEJAS)
+        // DASHBOARD
         // ============================================================================
         async function actualizarDashboard() {
             try {
@@ -1451,29 +1444,75 @@
             const input = document.getElementById('faltanteProducto');
             if (!input) return;
             
+            // Usar un debounce para evitar búsquedas con cada tecla
+            let timeoutId = null;
+            
             input.addEventListener('input', function(e) {
-                const valor = e.target.value.trim();
+                const valor = e.target.value;
                 const dropdown = document.getElementById('productoDropdown');
+                
+                // Limpiar timeout anterior
+                if (timeoutId) {
+                    clearTimeout(timeoutId);
+                }
                 
                 // Ocultar mensaje anterior
                 document.getElementById('mensajeProducto').classList.add('hidden');
-                document.getElementById('camposProveedorNuevo').classList.add('hidden');
                 
-                if (!valor || valor.length < 2 || valor.replace(/\s+/g, '').length === 0) {
+                // IMPORTANTE: No mostrar campos de proveedor automáticamente
+                // Solo se mostrarán cuando el usuario haga clic fuera o presione Tab
+                
+                // Validar que no esté vacío después de trim
+                const valorTrim = valor.trim();
+                
+                if (!valorTrim || valorTrim.length < 2) {
                     dropdown.classList.remove('active');
                     return;
                 }
                 
-                const resultados = productos.filter(p => 
-                    p.nombre && p.nombre.toLowerCase().includes(valor.toLowerCase())
-                ).slice(0, 5); // Limitar a 5 resultados
-                
-                if (resultados.length > 0) {
-                    mostrarResultadosAutocompletadoProductos(resultados, valor);
-                } else {
+                // Validar que no sean solo espacios
+                if (valorTrim.replace(/\s+/g, '').length === 0) {
                     dropdown.classList.remove('active');
-                    mostrarMensajeProductoNuevo(valor);
+                    return;
                 }
+                
+                // Usar debounce para esperar a que el usuario termine de escribir
+                timeoutId = setTimeout(() => {
+                    const resultados = productos.filter(p => 
+                        p.nombre && p.nombre.toLowerCase().includes(valorTrim.toLowerCase())
+                    );
+                    
+                    if (resultados.length > 0) {
+                        mostrarResultadosAutocompletadoProductos(resultados);
+                    } else {
+                        dropdown.classList.remove('active');
+                        // IMPORTANTE: NO mostrar mensaje ni campos de proveedor automáticamente
+                        // El usuario terminará de escribir y luego hará clic o presionará Tab
+                    }
+                }, 500); // Esperar 500ms después de la última tecla
+            });
+            
+            // Cuando el campo pierde el foco (usuario hace clic fuera o presiona Tab)
+            input.addEventListener('blur', function(e) {
+                setTimeout(() => {
+                    const valor = this.value.trim();
+                    const dropdown = document.getElementById('productoDropdown');
+                    
+                    // Ocultar dropdown
+                    dropdown.classList.remove('active');
+                    
+                    // Solo si hay texto y el dropdown no está activo, verificar si es producto nuevo
+                    if (valor && valor.length >= 2) {
+                        const productoExistente = productos.find(p => 
+                            p.nombre && p.nombre.toLowerCase() === valor.toLowerCase()
+                        );
+                        
+                        if (!productoExistente) {
+                            // Mostrar mensaje pero NO mover el foco
+                            mostrarMensajeProductoNuevo(valor);
+                        }
+                    }
+                }, 200); // Pequeño retraso para permitir clics en el dropdown
             });
             
             // Cerrar dropdown al hacer clic fuera
@@ -1483,39 +1522,56 @@
                     dropdown.classList.remove('active');
                 }
             });
+            
+            // Permitir usar Enter para seleccionar o continuar
+            input.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const dropdown = document.getElementById('productoDropdown');
+                    const valor = this.value.trim();
+                    
+                    if (dropdown.classList.contains('active')) {
+                        // Si hay items en el dropdown, seleccionar el primero
+                        const firstItem = dropdown.querySelector('.autocomplete-item');
+                        if (firstItem) {
+                            firstItem.click();
+                        }
+                    } else if (valor && valor.length >= 2) {
+                        // Si no hay dropdown, verificar si es producto nuevo
+                        const productoExistente = productos.find(p => 
+                            p.nombre && p.nombre.toLowerCase() === valor.toLowerCase()
+                        );
+                        
+                        if (!productoExistente) {
+                            mostrarMensajeProductoNuevo(valor);
+                            // Mover foco al campo de proveedor solo si el usuario presiona Enter
+                            setTimeout(() => {
+                                document.getElementById('nuevoProveedorNombre').focus();
+                            }, 100);
+                        }
+                    }
+                }
+            });
         }
 
-        function mostrarResultadosAutocompletadoProductos(resultados, busqueda) {
+        function mostrarResultadosAutocompletadoProductos(resultados) {
             const dropdown = document.getElementById('productoDropdown');
             if (!dropdown) return;
             
             dropdown.innerHTML = '';
             
-            resultados.forEach(producto => {
-                if (!producto.nombre || producto.nombre.trim().length === 0) return;
+            resultados.slice(0, 5).forEach(producto => {
+                // Asegurarnos de que el producto tenga nombre
+                if (!producto.nombre || producto.nombre.trim().length === 0) {
+                    return; // Saltar productos sin nombre
+                }
                 
                 const div = document.createElement('div');
                 div.className = 'autocomplete-item';
+                div.textContent = producto.nombre;
                 
-                // Destacar la parte que coincide con la búsqueda
-                const nombre = producto.nombre;
-                const nombreLower = nombre.toLowerCase();
-                const busquedaLower = busqueda.toLowerCase();
-                const indice = nombreLower.indexOf(busquedaLower);
-                
-                if (indice !== -1) {
-                    const parte1 = nombre.substring(0, indice);
-                    const parte2 = nombre.substring(indice, indice + busqueda.length);
-                    const parte3 = nombre.substring(indice + busqueda.length);
-                    
-                    div.innerHTML = `${parte1}<strong>${parte2}</strong>${parte3}`;
-                } else {
-                    div.textContent = nombre;
-                }
-                
-                // Agregar información del proveedor si existe
                 if (producto.proveedor) {
-                    div.innerHTML += `<span class="proveedor-info">Proveedor: ${producto.proveedor} | Medio: ${producto.medio || 'WhatsApp'}</span>`;
+                    div.innerHTML = `${producto.nombre} <small style="color:#666;">(${producto.proveedor})</small>`;
                 }
                 
                 div.addEventListener('click', () => {
@@ -1541,7 +1597,7 @@
             document.getElementById('productoExistenteMedio').value = producto.medio || 'WhatsApp';
             document.getElementById('productoExistenteContacto').value = producto.contacto || '';
             
-            // Mostrar campos de proveedor si el producto no tiene proveedor
+            // Si el producto no tiene proveedor, mostrar campos para que lo complete
             if (!producto.proveedor) {
                 mostrarMensajeProductoNuevo(producto.nombre);
             } else {
@@ -1558,6 +1614,8 @@
                     <small>Proveedor: ${producto.proveedor} | Medio: ${producto.medio || 'WhatsApp'}</small>
                 `;
             }
+            
+            // NO MOVER EL FOCO - El usuario puede continuar donde estaba
         }
 
         function mostrarMensajeProductoNuevo(valor) {
@@ -1565,49 +1623,63 @@
             mensajeDiv.classList.remove('hidden');
             mensajeDiv.style.background = '#e3f2fd';
             document.getElementById('textoMensaje').innerHTML = `
-                ✨ ${valor ? 'Producto nuevo' : 'Producto sin proveedor'}<br>
-                <small>Completa los datos del proveedor</small>
+                ✨ Producto nuevo<br>
+                <small>Completa los datos del proveedor cuando termines</small>
             `;
             
             // Mostrar campos de proveedor nuevo
-            const camposProveedor = document.getElementById('camposProveedorNuevo');
-            camposProveedor.classList.remove('hidden');
+            document.getElementById('camposProveedorNuevo').classList.remove('hidden');
             
-            // Si el producto ya tenía un nombre, ponerlo en el campo del proveedor
-            const proveedorInput = document.getElementById('nuevoProveedorNombre');
-            const proveedorExistente = document.getElementById('productoExistenteProveedor').value;
+            // Resetear campos de proveedor nuevo
+            document.getElementById('nuevoProveedorNombre').value = '';
+            document.getElementById('nuevoProveedorMedio').value = 'WhatsApp';
+            document.getElementById('nuevoProveedorContacto').value = '';
             
-            if (proveedorExistente) {
-                proveedorInput.value = proveedorExistente;
-                // También actualizar los otros campos si existen
-                document.getElementById('nuevoProveedorMedio').value = document.getElementById('productoExistenteMedio').value || 'WhatsApp';
-                document.getElementById('nuevoProveedorContacto').value = document.getElementById('productoExistenteContacto').value || '';
-            } else {
-                proveedorInput.value = '';
-                document.getElementById('nuevoProveedorMedio').value = 'WhatsApp';
-                document.getElementById('nuevoProveedorContacto').value = '';
-            }
-            
-            // Enfocar el campo del proveedor
-            setTimeout(() => {
-                proveedorInput.focus();
-            }, 300);
+            // ¡IMPORTANTE! NO MOVER EL FOCO AUTOMÁTICAMENTE
+            // El usuario decidirá cuándo pasar al campo de proveedor
         }
 
         // ============================================================================
-        // AUTOCOMPLETADO DE PROVEEDORES - NUEVA FUNCIONALIDAD
+        // AUTOCOMPLETADO DE PROVEEDORES
         // ============================================================================
         function configurarAutocompletadoProveedores() {
             const input = document.getElementById('nuevoProveedorNombre');
             if (!input) return;
             
-            // Eliminar event listeners anteriores para evitar duplicados
-            const newInput = input.cloneNode(true);
-            input.parentNode.replaceChild(newInput, input);
-            document.getElementById('nuevoProveedorNombre').addEventListener('input', manejarBusquedaProveedores);
+            // Usar debounce para evitar búsquedas con cada tecla
+            let timeoutId = null;
             
-            // También configurar para cuando se hace clic (mostrar todos los proveedores)
-            document.getElementById('nuevoProveedorNombre').addEventListener('click', function(e) {
+            input.addEventListener('input', function(e) {
+                const valor = e.target.value.trim();
+                const dropdown = document.getElementById('proveedorDropdown');
+                
+                // Limpiar timeout anterior
+                if (timeoutId) {
+                    clearTimeout(timeoutId);
+                }
+                
+                if (!valor || valor.length < 1) {
+                    dropdown.classList.remove('active');
+                    return;
+                }
+                
+                // Usar debounce
+                timeoutId = setTimeout(() => {
+                    // Filtrar proveedores que coincidan con la búsqueda
+                    const resultados = proveedores.filter(p => 
+                        p.nombre && p.nombre.toLowerCase().includes(valor.toLowerCase())
+                    ).slice(0, 8);
+                    
+                    if (resultados.length > 0) {
+                        mostrarResultadosAutocompletadoProveedores(resultados, valor);
+                    } else {
+                        dropdown.classList.remove('active');
+                    }
+                }, 300);
+            });
+            
+            // Al hacer clic en el campo, si está vacío, mostrar todos los proveedores
+            input.addEventListener('click', function(e) {
                 if (this.value.length === 0) {
                     mostrarTodosLosProveedores();
                 }
@@ -1621,31 +1693,6 @@
                     dropdown.classList.remove('active');
                 }
             });
-        }
-
-        function manejarBusquedaProveedores(e) {
-            const valor = e.target.value.trim();
-            const dropdown = document.getElementById('proveedorDropdown');
-            
-            if (!valor || valor.length < 1) {
-                if (valor.length === 0) {
-                    mostrarTodosLosProveedores();
-                } else {
-                    dropdown.classList.remove('active');
-                }
-                return;
-            }
-            
-            // Filtrar proveedores que coincidan con la búsqueda
-            const resultados = proveedores.filter(p => 
-                p.nombre && p.nombre.toLowerCase().includes(valor.toLowerCase())
-            ).slice(0, 8); // Limitar a 8 resultados
-            
-            if (resultados.length > 0) {
-                mostrarResultadosAutocompletadoProveedores(resultados, valor);
-            } else {
-                dropdown.classList.remove('active');
-            }
         }
 
         function mostrarTodosLosProveedores() {
@@ -1740,12 +1787,14 @@
                 document.getElementById('nuevoProveedorContacto').value = proveedor.contacto;
             }
             
-            // Mostrar notificación
-            mostrarNotificacion(`Proveedor "${proveedor.nombre}" seleccionado`, 'success', 2000);
+            // Mover foco al siguiente campo (medio de contacto)
+            setTimeout(() => {
+                document.getElementById('nuevoProveedorMedio').focus();
+            }, 100);
         }
 
         // ============================================================================
-        // GUARDAR FALTANTE - MEJORADO CON AUTOCOMPLETADO DE PROVEEDORES
+        // GUARDAR FALTANTE
         // ============================================================================
         async function guardarFaltante(event) {
             event.preventDefault();
@@ -1786,7 +1835,7 @@
                 return;
             }
             
-            // Obtener datos del proveedor (de campos nuevos o existentes)
+            // Obtener datos del proveedor
             let proveedorNombre = '';
             let proveedorMedio = '';
             let proveedorContacto = '';
