@@ -1332,7 +1332,7 @@
         }
 
         // ============================================================================
-        // AUTOCOMPLETADO DE PRODUCTOS - CORREGIDO
+        // AUTOCOMPLETADO DE PRODUCTOS - CORREGIDO (NO MUEVE EL FOCO)
         // ============================================================================
         function configurarAutocompletado() {
             const input = document.getElementById('faltanteProducto');
@@ -1358,7 +1358,6 @@
                 // Validar que no sean solo espacios
                 if (valorTrim.replace(/\s+/g, '').length === 0) {
                     dropdown.classList.remove('active');
-                    mostrarNotificacion('Escribe un nombre válido para el producto', 'error', 3000);
                     return;
                 }
                 
@@ -1452,10 +1451,10 @@
             mensajeDiv.style.background = '#e3f2fd';
             document.getElementById('textoMensaje').innerHTML = `
                 ✨ Producto nuevo<br>
-                <small>Completa los datos del proveedor</small>
+                <small>Completa los datos del proveedor cuando termines de escribir</small>
             `;
             
-            // Mostrar campos de proveedor nuevo
+            // Mostrar campos de proveedor nuevo PERO NO MOVER EL FOCO
             document.getElementById('camposProveedorNuevo').classList.remove('hidden');
             
             // Resetear campos de proveedor nuevo
@@ -1463,14 +1462,12 @@
             document.getElementById('nuevoProveedorMedio').value = 'WhatsApp';
             document.getElementById('nuevoProveedorContacto').value = '';
             
-            // Enfocar el campo de proveedor
-            setTimeout(() => {
-                document.getElementById('nuevoProveedorNombre').focus();
-            }, 300);
+            // ¡IMPORTANTE! NO MOVER EL FOCO - El usuario puede seguir escribiendo
+            // Quitamos completamente el setTimeout que movía el foco
         }
 
         // ============================================================================
-        // GUARDAR FALTANTE - COMPLETAMENTE CORREGIDO
+        // GUARDAR FALTANTE - CORREGIDO
         // ============================================================================
         async function guardarFaltante(event) {
             event.preventDefault();
@@ -1544,7 +1541,7 @@
                 faltanteData.medio = document.getElementById('productoExistenteMedio').value || 'WhatsApp';
                 faltanteData.contacto = document.getElementById('productoExistenteContacto').value || '';
                 
-                // Si el producto existe pero no tiene proveedor, pedirlo
+                // Si el producto existe pero no tiene proveedor, usar los campos de proveedor nuevo si están completos
                 if (!faltanteData.proveedor) {
                     const proveedorNombre = document.getElementById('nuevoProveedorNombre').value.trim();
                     if (proveedorNombre) {
@@ -1844,54 +1841,6 @@
         }
 
         // ============================================================================
-        // FUNCIÓN PARA LIMPIAR FALTANTES VACÍOS
-        // ============================================================================
-        async function limpiarFaltantesVacios() {
-            if (!confirm('¿Limpiar faltantes con nombres vacíos?\nEsta acción eliminará faltantes inválidos.')) {
-                return;
-            }
-            
-            mostrarLoading(true, 'Limpiando faltantes vacíos...');
-            
-            try {
-                const snapshot = await db.collection('faltantes').get();
-                let eliminados = 0;
-                let batch = db.batch();
-                let contador = 0;
-                
-                snapshot.forEach(doc => {
-                    const data = doc.data();
-                    // Verificar si el producto está vacío o solo tiene espacios
-                    if (!data.producto || data.producto.trim().length === 0) {
-                        batch.delete(doc.ref);
-                        eliminados++;
-                        contador++;
-                        
-                        // Firestore limita los batch a 500 operaciones
-                        if (contador >= 400) {
-                            batch.commit();
-                            batch = db.batch();
-                            contador = 0;
-                        }
-                    }
-                });
-                
-                if (contador > 0) {
-                    await batch.commit();
-                }
-                
-                mostrarNotificacion(`✅ Se eliminaron ${eliminados} faltantes vacíos`, 'success');
-                cargarFaltantes();
-                
-            } catch (error) {
-                console.error('Error limpiando faltantes:', error);
-                mostrarNotificacion('Error al limpiar faltantes', 'error');
-            } finally {
-                mostrarLoading(false);
-            }
-        }
-
-        // ============================================================================
         // INICIALIZAR AL CARGAR
         // ============================================================================
         document.addEventListener('DOMContentLoaded', function() {
@@ -1920,47 +1869,6 @@
             window.addEventListener('offline', () => {
                 mostrarNotificacion('Modo sin conexión activado', 'error', 3000);
             });
-            
-            // Función para limpiar datos inválidos (puedes llamarla desde la consola si es necesario)
-            window.limpiarFaltantesVacios = limpiarFaltantesVacios;
-            
-            // Función para reparar proveedores undefined
-            window.repararProveedoresUndefined = async function() {
-                mostrarLoading(true, 'Reparando proveedores undefined...');
-                
-                try {
-                    const snapshot = await db.collection('faltantes')
-                        .where('proveedor', '==', 'undefined')
-                        .get();
-                    
-                    let reparados = 0;
-                    const batch = db.batch();
-                    
-                    snapshot.forEach(doc => {
-                        const data = doc.data();
-                        const faltanteRef = db.collection('faltantes').doc(doc.id);
-                        batch.update(faltanteRef, {
-                            proveedor: 'Sin proveedor',
-                            medio: 'WhatsApp',
-                            contacto: 'Sin contacto'
-                        });
-                        reparados++;
-                    });
-                    
-                    if (reparados > 0) {
-                        await batch.commit();
-                        mostrarNotificacion(`✅ Se repararon ${reparados} faltantes con proveedor "undefined"`, 'success');
-                    } else {
-                        mostrarNotificacion('✅ No hay faltantes con proveedor "undefined" para reparar', 'success');
-                    }
-                    
-                } catch (error) {
-                    console.error('Error reparando proveedores:', error);
-                    mostrarNotificacion('Error al reparar proveedores', 'error');
-                } finally {
-                    mostrarLoading(false);
-                }
-            };
         });
     </script>
 </body>
