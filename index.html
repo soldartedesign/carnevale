@@ -1,0 +1,1606 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📱 Reportar Faltantes - Ferretería Carnevale</title>
+    
+    <!-- PWA Configuration -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#667eea">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    
+    <!-- Iconos -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏗️</text></svg>">
+    
+    <style>
+        /* ===== ESTILOS MOBILE-FIRST ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .app-container {
+            max-width: 100%;
+            min-height: 100vh;
+            display: none;
+        }
+
+        /* ===== HEADER MÓVIL ===== */
+        .mobile-header {
+            background: linear-gradient(135deg, #2c3e50 0%, #4a6491 100%);
+            color: white;
+            padding: 15px 20px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .app-title {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .header-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 18px;
+        }
+
+        /* ===== CONTENIDO PRINCIPAL ===== */
+        .main-content {
+            padding: 20px;
+            padding-bottom: 80px; /* Espacio para navegación */
+        }
+
+        .page {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ===== CARD STYLES ===== */
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* ===== FORMULARIOS MOBILE ===== */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #495057;
+            font-size: 14px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 16px;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: all 0.3s;
+            background: white;
+            -webkit-appearance: none;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+        }
+
+        /* Select móvil mejorado */
+        select.form-input {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%23333' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 16px center;
+            background-size: 12px;
+            padding-right: 40px;
+        }
+
+        /* ===== BOTONES MOBILE ===== */
+        .btn {
+            width: 100%;
+            padding: 18px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: all 0.3s;
+            margin-top: 10px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            color: white;
+        }
+
+        .btn-primary:active {
+            transform: scale(0.98);
+            opacity: 0.9;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+            color: white;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #f8f9fa;
+            color: #495057;
+            border: 2px solid #e9ecef;
+        }
+
+        .btn-sm {
+            padding: 12px 20px;
+            font-size: 14px;
+            width: auto;
+        }
+
+        /* ===== AUTOCOMPLETADO MOBILE ===== */
+        .autocomplete-container {
+            position: relative;
+        }
+
+        .autocomplete-list {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            z-index: 1000;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            display: none;
+        }
+
+        .autocomplete-list.active {
+            display: block;
+        }
+
+        .autocomplete-item {
+            padding: 15px;
+            border-bottom: 1px solid #f0f0f0;
+            cursor: pointer;
+            transition: background 0.2s;
+            font-size: 15px;
+        }
+
+        .autocomplete-item:active {
+            background: #f8f9fa;
+        }
+
+        .autocomplete-item:last-child {
+            border-bottom: none;
+        }
+
+        /* ===== LISTA DE FALTANTES ===== */
+        .faltante-item {
+            background: white;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            border-left: 4px solid #3498db;
+        }
+
+        .faltante-item.sin-stock {
+            border-left-color: #e74c3c;
+        }
+
+        .faltante-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 10px;
+        }
+
+        .faltante-producto {
+            font-weight: 600;
+            font-size: 16px;
+            color: #2c3e50;
+        }
+
+        .faltante-badge {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .badge-pendiente {
+            background: #ffeaa7;
+            color: #856404;
+        }
+
+        .badge-pedido {
+            background: #a3e4d7;
+            color: #0e6251;
+        }
+
+        .faltante-details {
+            font-size: 14px;
+            color: #666;
+            line-height: 1.5;
+        }
+
+        /* ===== LOADING MOBILE ===== */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255,255,255,0.95);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            flex-direction: column;
+        }
+
+        .loading-overlay.active {
+            display: flex;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        /* ===== NOTIFICACIONES MOBILE ===== */
+        .notification {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            padding: 15px;
+            border-radius: 12px;
+            color: white;
+            font-weight: 500;
+            z-index: 1001;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+            animation: slideDown 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        @keyframes slideDown {
+            from { transform: translateY(-100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .notification.success {
+            background: #2ecc71;
+            border-left: 5px solid #27ae60;
+        }
+
+        .notification.error {
+            background: #e74c3c;
+            border-left: 5px solid #c0392b;
+        }
+
+        /* ===== NAVEGACIÓN INFERIOR ===== */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 0;
+            box-shadow: 0 -2px 20px rgba(0,0,0,0.1);
+            z-index: 100;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-decoration: none;
+            color: #95a5a6;
+            padding: 8px 12px;
+            border-radius: 10px;
+            transition: all 0.3s;
+            min-width: 70px;
+        }
+
+        .nav-item.active {
+            color: #3498db;
+            background: rgba(52, 152, 219, 0.1);
+        }
+
+        .nav-icon {
+            font-size: 22px;
+            margin-bottom: 4px;
+        }
+
+        .nav-label {
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        /* ===== LOGIN SCREEN MOBILE ===== */
+        .login-screen {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+        }
+
+        .login-container {
+            background: white;
+            border-radius: 20px;
+            padding: 30px 25px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.2);
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .login-logo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .login-logo h1 {
+            font-size: 24px;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+
+        .login-logo p {
+            color: #7f8c8d;
+            font-size: 14px;
+        }
+
+        /* ===== ESTADÍSTICAS ===== */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 15px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .stat-number {
+            font-size: 28px;
+            font-weight: bold;
+            color: #3498db;
+            margin: 10px 0;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #7f8c8d;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* ===== INSTALL PROMPT ===== */
+        .install-prompt {
+            position: fixed;
+            bottom: 80px;
+            left: 20px;
+            right: 20px;
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            z-index: 99;
+            animation: slideUp 0.3s ease;
+            display: none;
+        }
+
+        .install-prompt.active {
+            display: block;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .install-content {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .install-icon {
+            font-size: 32px;
+            color: #3498db;
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (min-width: 768px) {
+            .app-container {
+                max-width: 400px;
+                margin: 0 auto;
+                box-shadow: 0 0 30px rgba(0,0,0,0.2);
+            }
+        }
+
+        /* ===== UTILITIES ===== */
+        .hidden {
+            display: none !important;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .mt-2 { margin-top: 10px; }
+        .mt-3 { margin-top: 15px; }
+        .mt-4 { margin-top: 20px; }
+        .mb-2 { margin-bottom: 10px; }
+        .mb-3 { margin-bottom: 15px; }
+        .mb-4 { margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+    <!-- Login Screen -->
+    <div class="login-screen" id="loginScreen">
+        <div class="login-container">
+            <div class="login-logo">
+                <h1>🏗️ Ferretería Carnevale</h1>
+                <p>Reporte móvil de faltantes</p>
+            </div>
+            
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="loginEmail" class="form-label">Correo electrónico</label>
+                    <input type="email" id="loginEmail" class="form-input" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="loginPassword" class="form-label">Contraseña</label>
+                    <input type="password" id="loginPassword" class="form-input" required>
+                </div>
+                
+                <button type="submit" class="btn btn-primary">
+                    <span>📱</span> Iniciar Sesión
+                </button>
+                
+                <div class="text-center mt-3">
+                    <small style="color: #7f8c8d;">
+                        Usa las mismas credenciales que en la web
+                    </small>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+        <div id="loadingMessage" style="margin-top: 15px; color: #3498db; font-weight: 500;"></div>
+    </div>
+
+    <!-- Notification -->
+    <div id="notificationContainer"></div>
+
+    <!-- Install Prompt -->
+    <div class="install-prompt" id="installPrompt">
+        <div class="install-content">
+            <div class="install-icon">📱</div>
+            <div>
+                <strong>Instalar app</strong>
+                <p style="font-size: 14px; color: #666; margin-top: 5px;">
+                    Instala esta app para acceso rápido desde tu pantalla de inicio
+                </p>
+            </div>
+        </div>
+        <div style="display: flex; gap: 10px;">
+            <button class="btn btn-secondary btn-sm" onclick="ocultarInstalacion()">
+                Ahora no
+            </button>
+            <button class="btn btn-primary btn-sm" onclick="instalarApp()">
+                Instalar
+            </button>
+        </div>
+    </div>
+
+    <!-- Aplicación Principal -->
+    <div class="app-container" id="appContainer">
+        <!-- Header -->
+        <header class="mobile-header">
+            <div class="header-content">
+                <div class="app-title" id="pageTitle">🏗️ Reportar Faltante</div>
+                <div class="header-actions">
+                    <button class="header-btn" onclick="actualizarDatos()" title="Actualizar">
+                        🔄
+                    </button>
+                    <button class="header-btn" onclick="logout()" title="Cerrar sesión">
+                        👋
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Contenido Principal -->
+        <main class="main-content">
+            <!-- Página 1: Dashboard -->
+            <div id="page-dashboard" class="page active">
+                <div class="card">
+                    <h2 class="card-title">📊 Estado Actual</h2>
+                    
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-label">Faltantes Pendientes</div>
+                            <div class="stat-number" id="statPendientes">0</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Sin Stock</div>
+                            <div class="stat-number" id="statSinStock">0</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Pedidos Hoy</div>
+                            <div class="stat-number" id="statPedidosHoy">0</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Recibidos</div>
+                            <div class="stat-number" id="statRecibidos">0</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2 class="card-title">⚡ Acciones Rápidas</h2>
+                    <button class="btn btn-primary" onclick="navegarA('faltante')">
+                        ➕ Reportar Faltante
+                    </button>
+                    <button class="btn btn-secondary mt-2" onclick="navegarA('lista')">
+                        📋 Ver Faltantes
+                    </button>
+                </div>
+
+                <div class="card">
+                    <h2 class="card-title">📍 Sucursal Actual</h2>
+                    <div style="padding: 15px; background: #f8f9fa; border-radius: 10px;">
+                        <div style="font-size: 18px; font-weight: 600; color: #2c3e50;" id="sucursalActual">
+                            Cargando...
+                        </div>
+                        <button class="btn btn-secondary btn-sm mt-2" onclick="cambiarSucursal()">
+                            🔄 Cambiar Sucursal
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Página 2: Reportar Faltante -->
+            <div id="page-faltante" class="page">
+                <div class="card">
+                    <h2 class="card-title">⚠️ Reportar Faltante</h2>
+                    
+                    <form id="faltanteForm" onsubmit="guardarFaltante(event)">
+                        <!-- Producto -->
+                        <div class="form-group">
+                            <label class="form-label">Producto *</label>
+                            <div class="autocomplete-container">
+                                <input type="text" id="faltanteProducto" class="form-input" 
+                                       placeholder="Escribe el nombre del producto..." 
+                                       autocomplete="off" required>
+                                <div id="productoDropdown" class="autocomplete-list"></div>
+                            </div>
+                        </div>
+
+                        <!-- Mensaje de producto -->
+                        <div id="mensajeProducto" class="hidden" style="margin: 10px 0; padding: 12px; border-radius: 10px; background: #e3f2fd;">
+                            <span id="textoMensaje"></span>
+                        </div>
+
+                        <!-- Cantidad y Stock -->
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
+                            <div class="form-group">
+                                <label class="form-label">Cantidad *</label>
+                                <input type="number" id="faltanteCantidad" class="form-input" 
+                                       value="1" min="1" max="100" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Estado Stock *</label>
+                                <select id="faltanteStock" class="form-input" required>
+                                    <option value="Quedan Pocos">🟡 Pocos</option>
+                                    <option value="Sin Stock">🔴 Sin Stock</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Sucursal -->
+                        <div class="form-group">
+                            <label class="form-label">Sucursal *</label>
+                            <select id="faltanteSucursal" class="form-input" required>
+                                <!-- Se llena dinámicamente -->
+                            </select>
+                        </div>
+
+                        <!-- Campos ocultos para datos del producto -->
+                        <input type="hidden" id="productoExistenteId">
+                        <input type="hidden" id="productoExistenteProveedor">
+                        <input type="hidden" id="productoExistenteMedio">
+                        <input type="hidden" id="productoExistenteContacto">
+
+                        <!-- Botones -->
+                        <button type="submit" class="btn btn-success">
+                            ✅ Guardar Faltante
+                        </button>
+                        <button type="button" class="btn btn-secondary mt-2" onclick="limpiarFormularioFaltante()">
+                            🔄 Nuevo
+                        </button>
+                    </form>
+                </div>
+
+                <div class="card">
+                    <h2 class="card-title">💡 Consejo Rápido</h2>
+                    <p style="color: #666; line-height: 1.5;">
+                        Si el producto no existe en el sistema, puedes escribirlo normalmente. 
+                        El sistema te pedirá el proveedor cuando vayas a generar el pedido.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Página 3: Lista de Faltantes -->
+            <div id="page-lista" class="page">
+                <div class="card">
+                    <h2 class="card-title">📋 Faltantes Pendientes</h2>
+                    
+                    <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                        <button class="btn btn-secondary btn-sm" onclick="filtrarFaltantes('todos')">
+                            Todos
+                        </button>
+                        <button class="btn btn-secondary btn-sm" onclick="filtrarFaltantes('sin-stock')">
+                            🔴 Sin Stock
+                        </button>
+                    </div>
+                    
+                    <div id="listaFaltantes">
+                        <!-- Los faltantes se cargarán aquí -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Página 4: Perfil -->
+            <div id="page-perfil" class="page">
+                <div class="card">
+                    <h2 class="card-title">👤 Mi Perfil</h2>
+                    
+                    <div style="margin-bottom: 20px;">
+                        <div style="font-size: 14px; color: #7f8c8d;">Usuario</div>
+                        <div style="font-size: 18px; font-weight: 600; margin-top: 5px;" id="usuarioEmail">
+                            cargando...
+                        </div>
+                    </div>
+                    
+                    <div style="margin-bottom: 20px;">
+                        <div style="font-size: 14px; color: #7f8c8d;">Sucursal</div>
+                        <div style="font-size: 18px; font-weight: 600; margin-top: 5px;" id="usuarioSucursal">
+                            cargando...
+                        </div>
+                    </div>
+                    
+                    <button class="btn btn-secondary" onclick="cambiarSucursal()">
+                        🔄 Cambiar Sucursal
+                    </button>
+                    
+                    <button class="btn btn-danger mt-2" onclick="logout()">
+                        👋 Cerrar Sesión
+                    </button>
+                </div>
+
+                <div class="card">
+                    <h2 class="card-title">⚙️ Configuración</h2>
+                    
+                    <div style="margin-bottom: 15px;">
+                        <label style="display: flex; align-items: center; gap: 10px;">
+                            <input type="checkbox" id="notificacionesToggle">
+                            <span>🔔 Notificaciones push</span>
+                        </label>
+                    </div>
+                    
+                    <div style="margin-bottom: 15px;">
+                        <label style="display: flex; align-items: center; gap: 10px;">
+                            <input type="checkbox" id="modoOffline">
+                            <span>📱 Trabajar sin conexión</span>
+                        </label>
+                    </div>
+                    
+                    <button class="btn btn-secondary" onclick="exportarDatos()">
+                        📤 Exportar mis datos
+                    </button>
+                </div>
+            </div>
+        </main>
+
+        <!-- Navegación Inferior -->
+        <nav class="bottom-nav">
+            <a href="javascript:void(0)" class="nav-item active" onclick="navegarA('dashboard')">
+                <span class="nav-icon">📊</span>
+                <span class="nav-label">Inicio</span>
+            </a>
+            <a href="javascript:void(0)" class="nav-item" onclick="navegarA('faltante')">
+                <span class="nav-icon">➕</span>
+                <span class="nav-label">Reportar</span>
+            </a>
+            <a href="javascript:void(0)" class="nav-item" onclick="navegarA('lista')">
+                <span class="nav-icon">📋</span>
+                <span class="nav-label">Lista</span>
+            </a>
+            <a href="javascript:void(0)" class="nav-item" onclick="navegarA('perfil')">
+                <span class="nav-icon">👤</span>
+                <span class="nav-label">Perfil</span>
+            </a>
+        </nav>
+    </div>
+
+    <!-- Service Worker Registration -->
+    <script>
+        // ============================================================================
+        // CONFIGURACIÓN PWA
+        // ============================================================================
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw-mobile.js')
+                    .then(registration => {
+                        console.log('ServiceWorker registrado:', registration.scope);
+                    })
+                    .catch(error => {
+                        console.log('ServiceWorker falló:', error);
+                    });
+            });
+        }
+
+        // Detectar si la app puede instalarse
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            
+            // Mostrar prompt después de 5 segundos
+            setTimeout(() => {
+                mostrarInstalacion();
+            }, 5000);
+        });
+    </script>
+
+    <!-- Firebase y Lógica Principal -->
+    <script>
+        // ============================================================================
+        // CONFIGURACIÓN DE FIREBASE (MISMO QUE LA WEB)
+        // ============================================================================
+        const firebaseConfig = {
+            apiKey: "AIzaSyDIvu4JsAYAwccP9yTKERIzEtli2H86lSk",
+            authDomain: "ferreteria-sistema.firebaseapp.com",
+            projectId: "ferreteria-sistema",
+            storageBucket: "ferreteria-sistema.firebasestorage.app",
+            messagingSenderId: "122400105302",
+            appId: "1:122400105302:web:589b241839d43d1971ecf7"
+        };
+
+        try {
+            if (!firebase.apps.length) {
+                firebase.initializeApp(firebaseConfig);
+            }
+        } catch (error) {
+            console.log("Error inicializando Firebase:", error);
+        }
+        
+        const db = firebase.firestore();
+        const auth = firebase.auth();
+
+        // ============================================================================
+        // VARIABLES GLOBALES
+        // ============================================================================
+        let usuarioActual = null;
+        let productos = [];
+        let proveedores = [];
+        let faltantes = [];
+        let sucursales = ['Ferretería Carnevale', 'Ferretería Forza'];
+        let sucursalActual = sucursales[0];
+        let deferredInstallPrompt = null;
+
+        // ============================================================================
+        // FUNCIONES PWA
+        // ============================================================================
+        function mostrarInstalacion() {
+            if (deferredPrompt && !window.matchMedia('(display-mode: standalone)').matches) {
+                document.getElementById('installPrompt').classList.add('active');
+            }
+        }
+
+        function ocultarInstalacion() {
+            document.getElementById('installPrompt').classList.remove('active');
+        }
+
+        async function instalarApp() {
+            if (!deferredPrompt) return;
+            
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            
+            if (outcome === 'accepted') {
+                console.log('Usuario instaló la PWA');
+            }
+            
+            deferredPrompt = null;
+            ocultarInstalacion();
+        }
+
+        // Detectar si la app está instalada
+        window.addEventListener('appinstalled', () => {
+            console.log('PWA instalada');
+            ocultarInstalacion();
+        });
+
+        // ============================================================================
+        // FUNCIONES DE UTILIDAD
+        // ============================================================================
+        function mostrarLoading(mostrar = true, mensaje = '') {
+            const overlay = document.getElementById('loadingOverlay');
+            const mensajeElem = document.getElementById('loadingMessage');
+            
+            if (mensajeElem && mensaje) {
+                mensajeElem.textContent = mensaje;
+            }
+            
+            if (overlay) {
+                if (mostrar) {
+                    overlay.classList.add('active');
+                } else {
+                    overlay.classList.remove('active');
+                }
+            }
+        }
+
+        function mostrarNotificacion(mensaje, tipo = 'success', duracion = 4000) {
+            const container = document.getElementById('notificationContainer');
+            
+            // Remover notificaciones anteriores
+            container.innerHTML = '';
+            
+            const notification = document.createElement('div');
+            notification.className = `notification ${tipo}`;
+            notification.innerHTML = `<span>${mensaje}</span>`;
+            
+            container.appendChild(notification);
+            
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.remove();
+                }
+            }, duracion);
+        }
+
+        function formatearFecha(fecha) {
+            if (!fecha) return '-';
+            if (fecha.toDate) {
+                fecha = fecha.toDate();
+            }
+            return fecha.toLocaleDateString('es-AR');
+        }
+
+        // ============================================================================
+        // GESTIÓN DE SUCURSAL
+        // ============================================================================
+        function cargarSucursal() {
+            const guardada = localStorage.getItem('sucursalMobile');
+            if (guardada && sucursales.includes(guardada)) {
+                sucursalActual = guardada;
+            }
+            actualizarUISucursal();
+        }
+
+        function guardarSucursal(sucursal) {
+            localStorage.setItem('sucursalMobile', sucursal);
+            sucursalActual = sucursal;
+            actualizarUISucursal();
+            mostrarNotificacion(`Sucursal cambiada a: ${sucursal}`);
+        }
+
+        function cambiarSucursal() {
+            const indexActual = sucursales.indexOf(sucursalActual);
+            const nuevaIndex = (indexActual + 1) % sucursales.length;
+            guardarSucursal(sucursales[nuevaIndex]);
+            actualizarDashboard();
+            cargarFaltantes();
+        }
+
+        function actualizarUISucursal() {
+            document.getElementById('sucursalActual').textContent = sucursalActual;
+            document.getElementById('usuarioSucursal').textContent = sucursalActual;
+            
+            // Actualizar select en formulario
+            const select = document.getElementById('faltanteSucursal');
+            if (select) {
+                select.innerHTML = '';
+                sucursales.forEach(s => {
+                    const option = document.createElement('option');
+                    option.value = s;
+                    option.textContent = s;
+                    if (s === sucursalActual) option.selected = true;
+                    select.appendChild(option);
+                });
+            }
+        }
+
+        // ============================================================================
+        // AUTENTICACIÓN
+        // ============================================================================
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            mostrarLoading(true, 'Iniciando sesión...');
+            
+            try {
+                const userCredential = await auth.signInWithEmailAndPassword(email, password);
+                usuarioActual = userCredential.user;
+                
+                await verificarUsuarioFirestore(usuarioActual);
+                
+                mostrarNotificacion('¡Bienvenido! 👋');
+                inicializarApp();
+                
+            } catch (error) {
+                console.error('Error en login:', error);
+                let mensajeError = 'Error al iniciar sesión';
+                if (error.code === 'auth/user-not-found') {
+                    mensajeError = 'Usuario no encontrado';
+                } else if (error.code === 'auth/wrong-password') {
+                    mensajeError = 'Contraseña incorrecta';
+                }
+                mostrarNotificacion(mensajeError, 'error');
+            } finally {
+                mostrarLoading(false);
+            }
+        });
+
+        async function verificarUsuarioFirestore(user) {
+            try {
+                const userDoc = await db.collection('usuarios').doc(user.uid).get();
+                
+                if (!userDoc.exists) {
+                    await db.collection('usuarios').doc(user.uid).set({
+                        email: user.email,
+                        nombre: user.email.split('@')[0],
+                        fechaRegistro: firebase.firestore.FieldValue.serverTimestamp(),
+                        sucursal: sucursalActual,
+                        appMobile: true
+                    });
+                }
+                
+                return userDoc;
+            } catch (error) {
+                console.error('Error verificando usuario:', error);
+                return null;
+            }
+        }
+
+        function logout() {
+            if (confirm('¿Cerrar sesión?')) {
+                auth.signOut();
+                location.reload();
+            }
+        }
+
+        // Observador de autenticación
+        auth.onAuthStateChanged(async (user) => {
+            if (user) {
+                usuarioActual = user;
+                cargarSucursal();
+                inicializarApp();
+            } else {
+                document.getElementById('loginScreen').style.display = 'flex';
+                document.getElementById('appContainer').style.display = 'none';
+            }
+        });
+
+        // ============================================================================
+        // INICIALIZACIÓN DE LA APP
+        // ============================================================================
+        function inicializarApp() {
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('appContainer').style.display = 'block';
+            document.getElementById('usuarioEmail').textContent = usuarioActual.email;
+            
+            cargarDatosIniciales();
+            configurarListenersTiempoReal();
+            actualizarDashboard();
+            cargarFaltantes();
+        }
+
+        async function cargarDatosIniciales() {
+            try {
+                // Cargar productos
+                const snapshotProductos = await db.collection('productos')
+                    .where('activo', '==', true)
+                    .limit(100)
+                    .get();
+                
+                productos = [];
+                snapshotProductos.forEach(doc => {
+                    productos.push({ id: doc.id, ...doc.data() });
+                });
+                
+                // Cargar faltantes
+                await cargarFaltantes();
+                
+            } catch (error) {
+                console.error('Error cargando datos:', error);
+                mostrarNotificacion('Error cargando datos', 'error');
+            }
+        }
+
+        function configurarListenersTiempoReal() {
+            // Escuchar productos
+            db.collection('productos')
+                .where('activo', '==', true)
+                .onSnapshot((snapshot) => {
+                    productos = [];
+                    snapshot.forEach(doc => {
+                        productos.push({ id: doc.id, ...doc.data() });
+                    });
+                    configurarAutocompletado();
+                });
+            
+            // Escuchar faltantes
+            db.collection('faltantes')
+                .where('sucursal', '==', sucursalActual)
+                .orderBy('fechaReporte', 'desc')
+                .onSnapshot((snapshot) => {
+                    faltantes = [];
+                    snapshot.forEach(doc => {
+                        faltantes.push({ id: doc.id, ...doc.data() });
+                    });
+                    actualizarDashboard();
+                    actualizarListaFaltantes();
+                });
+        }
+
+        // ============================================================================
+        // NAVEGACIÓN
+        // ============================================================================
+        function navegarA(pagina) {
+            // Actualizar título
+            const titulos = {
+                'dashboard': '🏗️ Inicio',
+                'faltante': '⚠️ Reportar Faltante',
+                'lista': '📋 Faltantes Pendientes',
+                'perfil': '👤 Mi Perfil'
+            };
+            document.getElementById('pageTitle').textContent = titulos[pagina] || '🏗️ Ferretería';
+            
+            // Ocultar todas las páginas
+            document.querySelectorAll('.page').forEach(page => {
+                page.classList.remove('active');
+            });
+            
+            // Mostrar página seleccionada
+            document.getElementById(`page-${pagina}`).classList.add('active');
+            
+            // Actualizar navegación
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            const navItems = document.querySelectorAll('.nav-item');
+            const index = ['dashboard', 'faltante', 'lista', 'perfil'].indexOf(pagina);
+            if (index !== -1 && navItems[index]) {
+                navItems[index].classList.add('active');
+            }
+            
+            // Scroll al inicio
+            window.scrollTo(0, 0);
+        }
+
+        function actualizarDatos() {
+            mostrarNotificacion('Actualizando datos...', 'success', 2000);
+            actualizarDashboard();
+            cargarFaltantes();
+        }
+
+        // ============================================================================
+        // DASHBOARD
+        // ============================================================================
+        async function actualizarDashboard() {
+            try {
+                // Faltantes pendientes
+                const faltantesPendientes = faltantes.filter(f => 
+                    f.estadoFaltante === 'Pendiente'
+                ).length;
+                
+                // Faltantes sin stock
+                const faltantesSinStock = faltantes.filter(f => 
+                    f.estadoFaltante === 'Pendiente' && f.estadoStock === 'Sin Stock'
+                ).length;
+                
+                // Pedidos de hoy
+                const hoy = new Date();
+                hoy.setHours(0, 0, 0, 0);
+                const manana = new Date(hoy);
+                manana.setDate(manana.getDate() + 1);
+                
+                const snapshotPedidos = await db.collection('pedidos')
+                    .where('fechaPedido', '>=', hoy)
+                    .where('fechaPedido', '<', manana)
+                    .get();
+                
+                const pedidosHoy = snapshotPedidos.size;
+                
+                // Pedidos recibidos (últimos 7 días)
+                const hace7Dias = new Date();
+                hace7Dias.setDate(hace7Dias.getDate() - 7);
+                
+                const snapshotRecibidos = await db.collection('pedidos')
+                    .where('estado', '==', 'Recibido')
+                    .where('fechaRecepcion', '>=', hace7Dias)
+                    .get();
+                
+                const recibidos7Dias = snapshotRecibidos.size;
+                
+                // Actualizar UI
+                document.getElementById('statPendientes').textContent = faltantesPendientes;
+                document.getElementById('statSinStock').textContent = faltantesSinStock;
+                document.getElementById('statPedidosHoy').textContent = pedidosHoy;
+                document.getElementById('statRecibidos').textContent = recibidos7Dias;
+                
+            } catch (error) {
+                console.error('Error actualizando dashboard:', error);
+            }
+        }
+
+        // ============================================================================
+        // AUTOCOMPLETADO DE PRODUCTOS
+        // ============================================================================
+        function configurarAutocompletado() {
+            const input = document.getElementById('faltanteProducto');
+            const dropdown = document.getElementById('productoDropdown');
+            
+            if (!input) return;
+            
+            input.addEventListener('input', function(e) {
+                const valor = e.target.value.trim();
+                
+                // Ocultar mensaje anterior
+                document.getElementById('mensajeProducto').classList.add('hidden');
+                
+                if (!valor || valor.length < 2) {
+                    dropdown.classList.remove('active');
+                    return;
+                }
+                
+                const resultados = productos.filter(p => 
+                    p.nombre && p.nombre.toLowerCase().includes(valor.toLowerCase())
+                );
+                
+                if (resultados.length > 0) {
+                    mostrarResultadosAutocompletado(resultados);
+                } else {
+                    dropdown.classList.remove('active');
+                    mostrarMensajeProductoNuevo(valor);
+                }
+            });
+            
+            // Cerrar dropdown al hacer clic fuera
+            document.addEventListener('click', (e) => {
+                if (!input.contains(e.target) && !dropdown.contains(e.target)) {
+                    dropdown.classList.remove('active');
+                }
+            });
+        }
+
+        function mostrarResultadosAutocompletado(resultados) {
+            const dropdown = document.getElementById('productoDropdown');
+            if (!dropdown) return;
+            
+            dropdown.innerHTML = '';
+            
+            resultados.slice(0, 5).forEach(producto => {
+                const div = document.createElement('div');
+                div.className = 'autocomplete-item';
+                div.textContent = producto.nombre;
+                
+                div.addEventListener('click', () => {
+                    seleccionarProducto(producto);
+                });
+                
+                dropdown.appendChild(div);
+            });
+            
+            dropdown.classList.add('active');
+        }
+
+        function seleccionarProducto(producto) {
+            const input = document.getElementById('faltanteProducto');
+            const dropdown = document.getElementById('productoDropdown');
+            
+            input.value = producto.nombre;
+            dropdown.classList.remove('active');
+            
+            // Guardar datos del producto
+            document.getElementById('productoExistenteId').value = producto.id;
+            document.getElementById('productoExistenteProveedor').value = producto.proveedor || '';
+            document.getElementById('productoExistenteMedio').value = producto.medio || 'WhatsApp';
+            document.getElementById('productoExistenteContacto').value = producto.contacto || '';
+            
+            // Mostrar mensaje
+            const mensajeDiv = document.getElementById('mensajeProducto');
+            mensajeDiv.classList.remove('hidden');
+            mensajeDiv.style.background = '#e8f5e9';
+            document.getElementById('textoMensaje').innerHTML = `
+                ✅ Producto encontrado<br>
+                <small>Proveedor: ${producto.proveedor || 'Sin especificar'}</small>
+            `;
+        }
+
+        function mostrarMensajeProductoNuevo(valor) {
+            const mensajeDiv = document.getElementById('mensajeProducto');
+            mensajeDiv.classList.remove('hidden');
+            mensajeDiv.style.background = '#e3f2fd';
+            document.getElementById('textoMensaje').innerHTML = `
+                ✨ Producto nuevo<br>
+                <small>Se pedirán los datos del proveedor al generar el pedido</small>
+            `;
+        }
+
+        // ============================================================================
+        // GUARDAR FALTANTE
+        // ============================================================================
+        async function guardarFaltante(event) {
+            event.preventDefault();
+            
+            if (!usuarioActual) {
+                mostrarNotificacion('Debes iniciar sesión', 'error');
+                return;
+            }
+            
+            const producto = document.getElementById('faltanteProducto').value.trim();
+            const cantidad = parseInt(document.getElementById('faltanteCantidad').value) || 1;
+            const estadoStock = document.getElementById('faltanteStock').value;
+            const sucursal = document.getElementById('faltanteSucursal').value;
+            const productoId = document.getElementById('productoExistenteId').value;
+            
+            if (!producto) {
+                mostrarNotificacion('El producto es requerido', 'error');
+                return;
+            }
+            
+            if (!sucursal) {
+                mostrarNotificacion('La sucursal es requerida', 'error');
+                return;
+            }
+            
+            // Verificar si ya existe un faltante pendiente igual
+            const existeFaltante = faltantes.some(f => 
+                f.producto === producto && 
+                f.sucursal === sucursal && 
+                f.estadoFaltante === 'Pendiente'
+            );
+            
+            if (existeFaltante) {
+                mostrarNotificacion('Ya existe un faltante pendiente para este producto', 'error');
+                return;
+            }
+            
+            // Preparar datos
+            const faltanteData = {
+                producto: producto,
+                cantidad: cantidad,
+                estadoStock: estadoStock,
+                sucursal: sucursal,
+                estadoFaltante: 'Pendiente',
+                fechaReporte: firebase.firestore.FieldValue.serverTimestamp(),
+                usuarioReporte: usuarioActual.email,
+                fechaPedido: null,
+                idPedido: null
+            };
+            
+            // Agregar datos del proveedor si el producto existe
+            if (productoId) {
+                faltanteData.proveedor = document.getElementById('productoExistenteProveedor').value;
+                faltanteData.medio = document.getElementById('productoExistenteMedio').value;
+                faltanteData.contacto = document.getElementById('productoExistenteContacto').value;
+            }
+            
+            mostrarLoading(true, 'Guardando faltante...');
+            
+            try {
+                await db.collection('faltantes').add(faltanteData);
+                
+                mostrarNotificacion('✅ Faltante reportado correctamente');
+                limpiarFormularioFaltante();
+                
+                // Registrar log
+                await db.collection('logs').add({
+                    fecha: firebase.firestore.FieldValue.serverTimestamp(),
+                    usuario: usuarioActual.email,
+                    accion: 'Reportar Faltante (Móvil)',
+                    detalle: `${producto} x${cantidad}`,
+                    sucursal: sucursal
+                });
+                
+            } catch (error) {
+                console.error('Error guardando faltante:', error);
+                mostrarNotificacion('Error al guardar faltante', 'error');
+            } finally {
+                mostrarLoading(false);
+            }
+        }
+
+        function limpiarFormularioFaltante() {
+            document.getElementById('faltanteForm').reset();
+            document.getElementById('faltanteCantidad').value = '1';
+            document.getElementById('faltanteSucursal').value = sucursalActual;
+            document.getElementById('productoExistenteId').value = '';
+            document.getElementById('mensajeProducto').classList.add('hidden');
+            
+            setTimeout(() => {
+                document.getElementById('faltanteProducto').focus();
+            }, 100);
+        }
+
+        // ============================================================================
+        // LISTA DE FALTANTES
+        // ============================================================================
+        async function cargarFaltantes() {
+            try {
+                const snapshot = await db.collection('faltantes')
+                    .where('sucursal', '==', sucursalActual)
+                    .orderBy('fechaReporte', 'desc')
+                    .limit(50)
+                    .get();
+                
+                faltantes = [];
+                snapshot.forEach(doc => {
+                    faltantes.push({ id: doc.id, ...doc.data() });
+                });
+                
+                actualizarListaFaltantes();
+                
+            } catch (error) {
+                console.error('Error cargando faltantes:', error);
+            }
+        }
+
+        function actualizarListaFaltantes() {
+            const container = document.getElementById('listaFaltantes');
+            if (!container) return;
+            
+            const faltantesPendientes = faltantes.filter(f => f.estadoFaltante === 'Pendiente');
+            
+            if (faltantesPendientes.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 40px 20px; color: #7f8c8d;">
+                        <div style="font-size: 48px; margin-bottom: 10px;">✅</div>
+                        <h3 style="margin-bottom: 10px;">No hay faltantes pendientes</h3>
+                        <p>¡Todo está bajo control!</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            let html = '';
+            faltantesPendientes.forEach(faltante => {
+                const esSinStock = faltante.estadoStock === 'Sin Stock';
+                const fecha = formatearFecha(faltante.fechaReporte);
+                
+                html += `
+                    <div class="faltante-item ${esSinStock ? 'sin-stock' : ''}">
+                        <div class="faltante-header">
+                            <div class="faltante-producto">${faltante.producto}</div>
+                            <div class="faltante-badge ${esSinStock ? 'badge-pedido' : 'badge-pendiente'}">
+                                ${esSinStock ? '🔴 Sin Stock' : '🟡 Pocos'}
+                            </div>
+                        </div>
+                        <div class="faltante-details">
+                            Cantidad: <strong>${faltante.cantidad || 1}</strong><br>
+                            Proveedor: ${faltante.proveedor || 'No especificado'}<br>
+                            Reportado: ${fecha}
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+
+        function filtrarFaltantes(filtro) {
+            // Implementación básica - se puede expandir
+            if (filtro === 'sin-stock') {
+                const filtrados = faltantes.filter(f => 
+                    f.estadoFaltante === 'Pendiente' && 
+                    f.estadoStock === 'Sin Stock'
+                );
+                mostrarFaltantesFiltrados(filtrados);
+            } else {
+                actualizarListaFaltantes();
+            }
+        }
+
+        function mostrarFaltantesFiltrados(faltantesFiltrados) {
+            const container = document.getElementById('listaFaltantes');
+            
+            if (faltantesFiltrados.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 40px 20px; color: #7f8c8d;">
+                        <div style="font-size: 48px; margin-bottom: 10px;">🔍</div>
+                        <h3 style="margin-bottom: 10px;">No hay resultados</h3>
+                        <p>No hay faltantes sin stock</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            let html = '';
+            faltantesFiltrados.forEach(faltante => {
+                const fecha = formatearFecha(faltante.fechaReporte);
+                
+                html += `
+                    <div class="faltante-item sin-stock">
+                        <div class="faltante-header">
+                            <div class="faltante-producto">${faltante.producto}</div>
+                            <div class="faltante-badge badge-pedido">
+                                🔴 Sin Stock
+                            </div>
+                        </div>
+                        <div class="faltante-details">
+                            Cantidad: <strong>${faltante.cantidad || 1}</strong><br>
+                            Proveedor: ${faltante.proveedor || 'No especificado'}<br>
+                            Reportado: ${fecha}
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+
+        // ============================================================================
+        // FUNCIONES ADICIONALES
+        // ============================================================================
+        function exportarDatos() {
+            const datos = {
+                usuario: usuarioActual.email,
+                sucursal: sucursalActual,
+                fecha: new Date().toISOString(),
+                faltantes: faltantes.filter(f => f.estadoFaltante === 'Pendiente')
+            };
+            
+            const datosJSON = JSON.stringify(datos, null, 2);
+            const blob = new Blob([datosJSON], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `faltantes_${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            mostrarNotificacion('Datos exportados correctamente');
+        }
+
+        // ============================================================================
+        // INICIALIZAR AL CARGAR
+        // ============================================================================
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('App móvil cargada');
+            
+            // Configurar autocompletado
+            configurarAutocompletado();
+            
+            // Detectar tecla Enter en login
+            document.getElementById('loginPassword').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    document.getElementById('loginForm').dispatchEvent(new Event('submit'));
+                }
+            });
+            
+            // Detectar si estamos en modo standalone
+            if (window.matchMedia('(display-mode: standalone)').matches) {
+                console.log('App ejecutándose en modo standalone');
+            }
+            
+            // Verificar conexión
+            window.addEventListener('online', () => {
+                mostrarNotificacion('Conectado a internet', 'success', 2000);
+            });
+            
+            window.addEventListener('offline', () => {
+                mostrarNotificacion('Modo sin conexión activado', 'error', 3000);
+            });
+        });
+    </script>
+</body>
+</html>
