@@ -8,6 +8,7 @@
     <!-- PWA Configuration -->
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#667eea">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     
@@ -835,6 +836,7 @@
                     })
                     .catch(error => {
                         console.log('ServiceWorker falló:', error);
+                        // Si falla, solo mostramos un mensaje en consola
                     });
             });
         }
@@ -842,10 +844,11 @@
         // Detectar si la app puede instalarse
         let deferredPrompt;
         window.addEventListener('beforeinstallprompt', (e) => {
+            // Prevenir el prompt automático
             e.preventDefault();
             deferredPrompt = e;
             
-            // Mostrar prompt después de 5 segundos
+            // Mostrar nuestro prompt personalizado después de 5 segundos
             setTimeout(() => {
                 mostrarInstalacion();
             }, 5000);
@@ -1102,10 +1105,9 @@
 
         async function cargarDatosIniciales() {
             try {
-                // Cargar productos
+                // Cargar productos (sin ordenar para evitar índices)
                 const snapshotProductos = await db.collection('productos')
                     .where('activo', '==', true)
-                    .limit(100)
                     .get();
                 
                 productos = [];
@@ -1113,7 +1115,7 @@
                     productos.push({ id: doc.id, ...doc.data() });
                 });
                 
-                // Cargar faltantes
+                // Cargar faltantes (sin ordenar para evitar índices)
                 await cargarFaltantes();
                 
             } catch (error) {
@@ -1123,7 +1125,7 @@
         }
 
         function configurarListenersTiempoReal() {
-            // Escuchar productos
+            // Escuchar productos (sin ordenar)
             db.collection('productos')
                 .where('activo', '==', true)
                 .onSnapshot((snapshot) => {
@@ -1134,15 +1136,22 @@
                     configurarAutocompletado();
                 });
             
-            // Escuchar faltantes
+            // Escuchar faltantes (SIN orderBy para evitar índices)
             db.collection('faltantes')
                 .where('sucursal', '==', sucursalActual)
-                .orderBy('fechaReporte', 'desc')
                 .onSnapshot((snapshot) => {
                     faltantes = [];
                     snapshot.forEach(doc => {
                         faltantes.push({ id: doc.id, ...doc.data() });
                     });
+                    
+                    // Ordenar localmente por fecha (más reciente primero)
+                    faltantes.sort((a, b) => {
+                        const fechaA = a.fechaReporte ? (a.fechaReporte.toDate ? a.fechaReporte.toDate() : new Date(a.fechaReporte)) : new Date(0);
+                        const fechaB = b.fechaReporte ? (b.fechaReporte.toDate ? b.fechaReporte.toDate() : new Date(b.fechaReporte)) : new Date(0);
+                        return fechaB - fechaA; // Más reciente primero
+                    });
+                    
                     actualizarDashboard();
                     actualizarListaFaltantes();
                 });
@@ -1191,11 +1200,11 @@
         }
 
         // ============================================================================
-        // DASHBOARD
+        // DASHBOARD (SIN CONSULTAS COMPLEJAS)
         // ============================================================================
         async function actualizarDashboard() {
             try {
-                // Faltantes pendientes
+                // Faltantes pendientes (ya cargados en el listener)
                 const faltantesPendientes = faltantes.filter(f => 
                     f.estadoFaltante === 'Pendiente'
                 ).length;
@@ -1205,38 +1214,49 @@
                     f.estadoFaltante === 'Pendiente' && f.estadoStock === 'Sin Stock'
                 ).length;
                 
-                // Pedidos de hoy
+                // Pedidos de hoy (cargar todos y filtrar localmente)
+                const snapshotPedidos = await db.collection('pedidos').get();
+                let pedidosHoy = 0;
+                let pedidosRecibidos = 0;
                 const hoy = new Date();
                 hoy.setHours(0, 0, 0, 0);
-                const manana = new Date(hoy);
-                manana.setDate(manana.getDate() + 1);
-                
-                const snapshotPedidos = await db.collection('pedidos')
-                    .where('fechaPedido', '>=', hoy)
-                    .where('fechaPedido', '<', manana)
-                    .get();
-                
-                const pedidosHoy = snapshotPedidos.size;
-                
-                // Pedidos recibidos (últimos 7 días)
                 const hace7Dias = new Date();
                 hace7Dias.setDate(hace7Dias.getDate() - 7);
                 
-                const snapshotRecibidos = await db.collection('pedidos')
-                    .where('estado', '==', 'Recibido')
-                    .where('fechaRecepcion', '>=', hace7Dias)
-                    .get();
-                
-                const recibidos7Dias = snapshotRecibidos.size;
+                snapshotPedidos.forEach(doc => {
+                    const pedido = doc.data();
+                    
+                    // Contar pedidos de hoy
+                    if (pedido.fechaPedido) {
+                        const fechaPedido = pedido.fechaPedido.toDate ? pedido.fechaPedido.toDate() : new Date(pedido.fechaPedido);
+                        if (fechaPedido >= hoy) {
+                            pedidosHoy++;
+                        }
+                    }
+                    
+                    // Contar pedidos recibidos últimos 7 días
+                    if (pedido.estado === 'Recibido' && pedido.fechaRecepcion) {
+                        const fechaRecepcion = pedido.fechaRecepcion.toDate ? pedido.fechaRecepcion.toDate() : new Date(pedido.fechaRecepcion);
+                        if (fechaRecepcion >= hace7Dias) {
+                            pedidosRecibidos++;
+                        }
+                    }
+                });
                 
                 // Actualizar UI
                 document.getElementById('statPendientes').textContent = faltantesPendientes;
                 document.getElementById('statSinStock').textContent = faltantesSinStock;
                 document.getElementById('statPedidosHoy').textContent = pedidosHoy;
-                document.getElementById('statRecibidos').textContent = recibidos7Dias;
+                document.getElementById('statRecibidos').textContent = pedidosRecibidos;
                 
             } catch (error) {
                 console.error('Error actualizando dashboard:', error);
+                // Fallback: mostrar datos básicos
+                const faltantesPendientes = faltantes.filter(f => f.estadoFaltante === 'Pendiente').length;
+                document.getElementById('statPendientes').textContent = faltantesPendientes;
+                document.getElementById('statSinStock').textContent = faltantes.filter(f => 
+                    f.estadoFaltante === 'Pendiente' && f.estadoStock === 'Sin Stock'
+                ).length;
             }
         }
 
@@ -1435,10 +1455,9 @@
         // ============================================================================
         async function cargarFaltantes() {
             try {
+                // SIN orderBy para evitar índices
                 const snapshot = await db.collection('faltantes')
                     .where('sucursal', '==', sucursalActual)
-                    .orderBy('fechaReporte', 'desc')
-                    .limit(50)
                     .get();
                 
                 faltantes = [];
@@ -1446,10 +1465,28 @@
                     faltantes.push({ id: doc.id, ...doc.data() });
                 });
                 
+                // Ordenar localmente por fecha (más reciente primero)
+                faltantes.sort((a, b) => {
+                    const fechaA = a.fechaReporte ? (a.fechaReporte.toDate ? a.fechaReporte.toDate() : new Date(a.fechaReporte)) : new Date(0);
+                    const fechaB = b.fechaReporte ? (b.fechaReporte.toDate ? b.fechaReporte.toDate() : new Date(b.fechaReporte)) : new Date(0);
+                    return fechaB - fechaA;
+                });
+                
                 actualizarListaFaltantes();
                 
             } catch (error) {
                 console.error('Error cargando faltantes:', error);
+                // Mostrar error amigable
+                const container = document.getElementById('listaFaltantes');
+                if (container) {
+                    container.innerHTML = `
+                        <div style="text-align: center; padding: 40px 20px; color: #e74c3c;">
+                            <div style="font-size: 48px; margin-bottom: 10px;">⚠️</div>
+                            <h3 style="margin-bottom: 10px;">Error cargando faltantes</h3>
+                            <p>Por favor, inténtalo de nuevo más tarde</p>
+                        </div>
+                    `;
+                }
             }
         }
 
@@ -1485,7 +1522,7 @@
                         </div>
                         <div class="faltante-details">
                             Cantidad: <strong>${faltante.cantidad || 1}</strong><br>
-                            Proveedor: ${faltante.proveedor || 'No especificado'}<br>
+                            ${faltante.proveedor ? `Proveedor: ${faltante.proveedor}<br>` : ''}
                             Reportado: ${fecha}
                         </div>
                     </div>
@@ -1496,7 +1533,6 @@
         }
 
         function filtrarFaltantes(filtro) {
-            // Implementación básica - se puede expandir
             if (filtro === 'sin-stock') {
                 const filtrados = faltantes.filter(f => 
                     f.estadoFaltante === 'Pendiente' && 
@@ -1536,7 +1572,7 @@
                         </div>
                         <div class="faltante-details">
                             Cantidad: <strong>${faltante.cantidad || 1}</strong><br>
-                            Proveedor: ${faltante.proveedor || 'No especificado'}<br>
+                            ${faltante.proveedor ? `Proveedor: ${faltante.proveedor}<br>` : ''}
                             Reportado: ${fecha}
                         </div>
                     </div>
