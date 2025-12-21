@@ -502,6 +502,25 @@
             color: #3498db;
         }
 
+        /* ===== CAMPOS PARA PROVEEDOR NUEVO ===== */
+        .nuevo-proveedor-container {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 15px;
+            margin: 15px 0;
+            border: 2px dashed #3498db;
+        }
+
+        .nuevo-proveedor-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #3498db;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
         /* ===== RESPONSIVE ===== */
         @media (min-width: 768px) {
             .app-container {
@@ -658,7 +677,7 @@
                 </div>
             </div>
 
-            <!-- Página 2: Reportar Faltante -->
+            <!-- Página 2: Reportar Faltante - CORREGIDA -->
             <div id="page-faltante" class="page">
                 <div class="card">
                     <h2 class="card-title">⚠️ Reportar Faltante</h2>
@@ -678,6 +697,38 @@
                         <!-- Mensaje de producto -->
                         <div id="mensajeProducto" class="hidden" style="margin: 10px 0; padding: 12px; border-radius: 10px; background: #e3f2fd;">
                             <span id="textoMensaje"></span>
+                        </div>
+
+                        <!-- Campos para PROVEEDOR (APARECE CUANDO ES PRODUCTO NUEVO) -->
+                        <div id="camposProveedorNuevo" class="nuevo-proveedor-container hidden">
+                            <div class="nuevo-proveedor-title">
+                                📝 Proveedor para producto nuevo
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Nombre del Proveedor *</label>
+                                <input type="text" id="nuevoProveedorNombre" class="form-input" 
+                                       placeholder="Ej: Proveedor S.A.">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Medio de contacto *</label>
+                                <select id="nuevoProveedorMedio" class="form-input">
+                                    <option value="WhatsApp">📱 WhatsApp</option>
+                                    <option value="Web">🌐 Web</option>
+                                    <option value="Manual">📞 Manual</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Contacto/Link *</label>
+                                <input type="text" id="nuevoProveedorContacto" class="form-input" 
+                                       placeholder="Ej: 11 1234-5678 o https://proveedor.com">
+                            </div>
+                            
+                            <div style="font-size: 12px; color: #666; margin-top: 10px;">
+                                💡 Este proveedor se guardará para futuros pedidos
+                            </div>
                         </div>
 
                         <!-- Cantidad y Stock -->
@@ -722,10 +773,10 @@
                 </div>
 
                 <div class="card">
-                    <h2 class="card-title">💡 Consejo Rápido</h2>
+                    <h2 class="card-title">💡 Instrucciones</h2>
                     <p style="color: #666; line-height: 1.5;">
-                        Si el producto no existe en el sistema, puedes escribirlo normalmente. 
-                        El sistema te pedirá el proveedor cuando vayas a generar el pedido.
+                        <strong>Para productos existentes:</strong> Solo escribe el nombre y selecciona de la lista.<br>
+                        <strong>Para productos nuevos:</strong> Escribe el nombre completo y completa los datos del proveedor que aparecerán.
                     </p>
                 </div>
             </div>
@@ -1115,6 +1166,16 @@
                     productos.push({ id: doc.id, ...doc.data() });
                 });
                 
+                // Cargar proveedores
+                const snapshotProveedores = await db.collection('proveedores')
+                    .where('activo', '==', true)
+                    .get();
+                
+                proveedores = [];
+                snapshotProveedores.forEach(doc => {
+                    proveedores.push({ id: doc.id, ...doc.data() });
+                });
+                
                 // Cargar faltantes (sin ordenar para evitar índices)
                 await cargarFaltantes();
                 
@@ -1134,6 +1195,16 @@
                         productos.push({ id: doc.id, ...doc.data() });
                     });
                     configurarAutocompletado();
+                });
+            
+            // Escuchar proveedores
+            db.collection('proveedores')
+                .where('activo', '==', true)
+                .onSnapshot((snapshot) => {
+                    proveedores = [];
+                    snapshot.forEach(doc => {
+                        proveedores.push({ id: doc.id, ...doc.data() });
+                    });
                 });
             
             // Escuchar faltantes (SIN orderBy para evitar índices)
@@ -1261,7 +1332,7 @@
         }
 
         // ============================================================================
-        // AUTOCOMPLETADO DE PRODUCTOS
+        // AUTOCOMPLETADO DE PRODUCTOS - CORREGIDO
         // ============================================================================
         function configurarAutocompletado() {
             const input = document.getElementById('faltanteProducto');
@@ -1274,6 +1345,7 @@
                 
                 // Ocultar mensaje anterior
                 document.getElementById('mensajeProducto').classList.add('hidden');
+                document.getElementById('camposProveedorNuevo').classList.add('hidden');
                 
                 // Validar que no esté vacío después de trim
                 const valorTrim = valor.trim();
@@ -1326,6 +1398,10 @@
                 div.className = 'autocomplete-item';
                 div.textContent = producto.nombre;
                 
+                if (producto.proveedor) {
+                    div.innerHTML = `${producto.nombre} <small style="color:#666;">(${producto.proveedor})</small>`;
+                }
+                
                 div.addEventListener('click', () => {
                     seleccionarProducto(producto);
                 });
@@ -1349,14 +1425,25 @@
             document.getElementById('productoExistenteMedio').value = producto.medio || 'WhatsApp';
             document.getElementById('productoExistenteContacto').value = producto.contacto || '';
             
+            // Ocultar campos de proveedor nuevo
+            document.getElementById('camposProveedorNuevo').classList.add('hidden');
+            
             // Mostrar mensaje
             const mensajeDiv = document.getElementById('mensajeProducto');
             mensajeDiv.classList.remove('hidden');
             mensajeDiv.style.background = '#e8f5e9';
-            document.getElementById('textoMensaje').innerHTML = `
-                ✅ Producto encontrado<br>
-                <small>Proveedor: ${producto.proveedor || 'Sin especificar'}</small>
-            `;
+            
+            if (producto.proveedor) {
+                document.getElementById('textoMensaje').innerHTML = `
+                    ✅ Producto encontrado<br>
+                    <small>Proveedor: ${producto.proveedor} | Medio: ${producto.medio || 'WhatsApp'}</small>
+                `;
+            } else {
+                document.getElementById('textoMensaje').innerHTML = `
+                    ✅ Producto encontrado<br>
+                    <small>No tiene proveedor asignado</small>
+                `;
+            }
         }
 
         function mostrarMensajeProductoNuevo(valor) {
@@ -1365,12 +1452,25 @@
             mensajeDiv.style.background = '#e3f2fd';
             document.getElementById('textoMensaje').innerHTML = `
                 ✨ Producto nuevo<br>
-                <small>Se pedirán los datos del proveedor al generar el pedido</small>
+                <small>Completa los datos del proveedor</small>
             `;
+            
+            // Mostrar campos de proveedor nuevo
+            document.getElementById('camposProveedorNuevo').classList.remove('hidden');
+            
+            // Resetear campos de proveedor nuevo
+            document.getElementById('nuevoProveedorNombre').value = '';
+            document.getElementById('nuevoProveedorMedio').value = 'WhatsApp';
+            document.getElementById('nuevoProveedorContacto').value = '';
+            
+            // Enfocar el campo de proveedor
+            setTimeout(() => {
+                document.getElementById('nuevoProveedorNombre').focus();
+            }, 300);
         }
 
         // ============================================================================
-        // GUARDAR FALTANTE - CORREGIDO CON VALIDACIONES
+        // GUARDAR FALTANTE - COMPLETAMENTE CORREGIDO
         // ============================================================================
         async function guardarFaltante(event) {
             event.preventDefault();
@@ -1425,7 +1525,7 @@
                 return;
             }
             
-            // Preparar datos
+            // Preparar datos del faltante
             const faltanteData = {
                 producto: producto,
                 cantidad: cantidad,
@@ -1438,11 +1538,86 @@
                 idPedido: null
             };
             
-            // Agregar datos del proveedor si el producto existe
+            // SI ES PRODUCTO EXISTENTE: Usar datos existentes
             if (productoId) {
-                faltanteData.proveedor = document.getElementById('productoExistenteProveedor').value;
-                faltanteData.medio = document.getElementById('productoExistenteMedio').value;
-                faltanteData.contacto = document.getElementById('productoExistenteContacto').value;
+                faltanteData.proveedor = document.getElementById('productoExistenteProveedor').value || '';
+                faltanteData.medio = document.getElementById('productoExistenteMedio').value || 'WhatsApp';
+                faltanteData.contacto = document.getElementById('productoExistenteContacto').value || '';
+                
+                // Si el producto existe pero no tiene proveedor, pedirlo
+                if (!faltanteData.proveedor) {
+                    const proveedorNombre = document.getElementById('nuevoProveedorNombre').value.trim();
+                    if (proveedorNombre) {
+                        faltanteData.proveedor = proveedorNombre;
+                        faltanteData.medio = document.getElementById('nuevoProveedorMedio').value || 'WhatsApp';
+                        faltanteData.contacto = document.getElementById('nuevoProveedorContacto').value || '';
+                    }
+                }
+            } 
+            // SI ES PRODUCTO NUEVO: Capturar datos del proveedor
+            else {
+                const proveedorNombre = document.getElementById('nuevoProveedorNombre').value.trim();
+                const proveedorContacto = document.getElementById('nuevoProveedorContacto').value.trim();
+                const proveedorMedio = document.getElementById('nuevoProveedorMedio').value;
+                
+                // Validar datos del proveedor
+                if (!proveedorNombre) {
+                    mostrarNotificacion('El nombre del proveedor es requerido para productos nuevos', 'error');
+                    document.getElementById('nuevoProveedorNombre').focus();
+                    return;
+                }
+                
+                if (!proveedorContacto) {
+                    mostrarNotificacion('El contacto del proveedor es requerido', 'error');
+                    document.getElementById('nuevoProveedorContacto').focus();
+                    return;
+                }
+                
+                faltanteData.proveedor = proveedorNombre;
+                faltanteData.medio = proveedorMedio;
+                faltanteData.contacto = proveedorContacto;
+                
+                // CREAR PRODUCTO EN EL CATÁLOGO
+                try {
+                    const productoData = {
+                        nombre: producto,
+                        proveedor: proveedorNombre,
+                        medio: proveedorMedio,
+                        contacto: proveedorContacto,
+                        activo: true,
+                        fechaCreacion: firebase.firestore.FieldValue.serverTimestamp()
+                    };
+                    
+                    await db.collection('productos').add(productoData);
+                    
+                    // VERIFICAR Y CREAR PROVEEDOR SI NO EXISTE
+                    const proveedorExistente = proveedores.find(p => 
+                        p.nombre && p.nombre.toLowerCase() === proveedorNombre.toLowerCase()
+                    );
+                    
+                    if (!proveedorExistente) {
+                        const proveedorData = {
+                            nombre: proveedorNombre,
+                            medio: proveedorMedio,
+                            contacto: proveedorContacto,
+                            activo: true,
+                            fechaCreacion: firebase.firestore.FieldValue.serverTimestamp()
+                        };
+                        
+                        await db.collection('proveedores').add(proveedorData);
+                    }
+                    
+                } catch (error) {
+                    console.error('Error creando producto/proveedor:', error);
+                    // Continuamos aunque falle la creación del producto/proveedor
+                }
+            }
+            
+            // Validar que al menos tengamos proveedor
+            if (!faltanteData.proveedor) {
+                mostrarNotificacion('El proveedor es requerido. Si el producto existe pero no tiene proveedor, complétalo en los campos de "Proveedor para producto nuevo".', 'error');
+                document.getElementById('nuevoProveedorNombre').focus();
+                return;
             }
             
             mostrarLoading(true, 'Guardando faltante...');
@@ -1458,7 +1633,7 @@
                     fecha: firebase.firestore.FieldValue.serverTimestamp(),
                     usuario: usuarioActual.email,
                     accion: 'Reportar Faltante (Móvil)',
-                    detalle: `${producto} x${cantidad}`,
+                    detalle: `${producto} x${cantidad} | Proveedor: ${faltanteData.proveedor}`,
                     sucursal: sucursal
                 });
                 
@@ -1473,14 +1648,23 @@
         function limpiarFormularioFaltante() {
             document.getElementById('faltanteForm').reset();
             document.getElementById('faltanteCantidad').value = '1';
+            document.getElementById('faltanteStock').value = 'Quedan Pocos';
             document.getElementById('faltanteSucursal').value = sucursalActual;
-            document.getElementById('productoExistenteId').value = '';
-            document.getElementById('mensajeProducto').classList.add('hidden');
             
-            // También resetear los campos ocultos de proveedor
+            // Limpiar campos ocultos
+            document.getElementById('productoExistenteId').value = '';
             document.getElementById('productoExistenteProveedor').value = '';
             document.getElementById('productoExistenteMedio').value = '';
             document.getElementById('productoExistenteContacto').value = '';
+            
+            // Ocultar campos adicionales
+            document.getElementById('mensajeProducto').classList.add('hidden');
+            document.getElementById('camposProveedorNuevo').classList.add('hidden');
+            
+            // Resetear campos de proveedor nuevo
+            document.getElementById('nuevoProveedorNombre').value = '';
+            document.getElementById('nuevoProveedorMedio').value = 'WhatsApp';
+            document.getElementById('nuevoProveedorContacto').value = '';
             
             setTimeout(() => {
                 document.getElementById('faltanteProducto').focus();
@@ -1488,7 +1672,7 @@
         }
 
         // ============================================================================
-        // LISTA DE FALTANTES
+        // LISTA DE FALTANTES - MEJORADA
         // ============================================================================
         async function cargarFaltantes() {
             try {
@@ -1557,6 +1741,8 @@
             faltantesPendientes.forEach(faltante => {
                 const esSinStock = faltante.estadoStock === 'Sin Stock';
                 const fecha = formatearFecha(faltante.fechaReporte);
+                const proveedor = faltante.proveedor || 'Sin proveedor';
+                const medio = faltante.medio || 'WhatsApp';
                 
                 html += `
                     <div class="faltante-item ${esSinStock ? 'sin-stock' : ''}">
@@ -1567,9 +1753,10 @@
                             </div>
                         </div>
                         <div class="faltante-details">
-                            Cantidad: <strong>${faltante.cantidad || 1}</strong><br>
-                            ${faltante.proveedor ? `Proveedor: ${faltante.proveedor}<br>` : ''}
-                            Reportado: ${fecha}
+                            <strong>Cantidad:</strong> ${faltante.cantidad || 1}<br>
+                            <strong>Proveedor:</strong> ${proveedor}<br>
+                            <strong>Medio:</strong> ${medio}<br>
+                            <strong>Reportado:</strong> ${fecha}
                         </div>
                     </div>
                 `;
@@ -1607,6 +1794,8 @@
             filtrados.forEach(faltante => {
                 const esSinStock = faltante.estadoStock === 'Sin Stock';
                 const fecha = formatearFecha(faltante.fechaReporte);
+                const proveedor = faltante.proveedor || 'Sin proveedor';
+                const medio = faltante.medio || 'WhatsApp';
                 
                 html += `
                     <div class="faltante-item ${esSinStock ? 'sin-stock' : ''}">
@@ -1617,9 +1806,10 @@
                             </div>
                         </div>
                         <div class="faltante-details">
-                            Cantidad: <strong>${faltante.cantidad || 1}</strong><br>
-                            ${faltante.proveedor ? `Proveedor: ${faltante.proveedor}<br>` : ''}
-                            Reportado: ${fecha}
+                            <strong>Cantidad:</strong> ${faltante.cantidad || 1}<br>
+                            <strong>Proveedor:</strong> ${proveedor}<br>
+                            <strong>Medio:</strong> ${medio}<br>
+                            <strong>Reportado:</strong> ${fecha}
                         </div>
                     </div>
                 `;
@@ -1733,6 +1923,44 @@
             
             // Función para limpiar datos inválidos (puedes llamarla desde la consola si es necesario)
             window.limpiarFaltantesVacios = limpiarFaltantesVacios;
+            
+            // Función para reparar proveedores undefined
+            window.repararProveedoresUndefined = async function() {
+                mostrarLoading(true, 'Reparando proveedores undefined...');
+                
+                try {
+                    const snapshot = await db.collection('faltantes')
+                        .where('proveedor', '==', 'undefined')
+                        .get();
+                    
+                    let reparados = 0;
+                    const batch = db.batch();
+                    
+                    snapshot.forEach(doc => {
+                        const data = doc.data();
+                        const faltanteRef = db.collection('faltantes').doc(doc.id);
+                        batch.update(faltanteRef, {
+                            proveedor: 'Sin proveedor',
+                            medio: 'WhatsApp',
+                            contacto: 'Sin contacto'
+                        });
+                        reparados++;
+                    });
+                    
+                    if (reparados > 0) {
+                        await batch.commit();
+                        mostrarNotificacion(`✅ Se repararon ${reparados} faltantes con proveedor "undefined"`, 'success');
+                    } else {
+                        mostrarNotificacion('✅ No hay faltantes con proveedor "undefined" para reparar', 'success');
+                    }
+                    
+                } catch (error) {
+                    console.error('Error reparando proveedores:', error);
+                    mostrarNotificacion('Error al reparar proveedores', 'error');
+                } finally {
+                    mostrarLoading(false);
+                }
+            };
         });
     </script>
 </body>
