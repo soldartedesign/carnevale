@@ -3,53 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>📱 Reportar Faltantes - Ferretería Carnevale</title>
-    
-    <!-- PWA Configuration -->
-    <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#667eea">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    
+    <meta name="description" content="App móvil para gestión de faltantes en Ferretería Carnevale">
+    <title>📦 Faltantes Carnevale</title>
+    <link rel="manifest" href="manifest.json">
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     
-    <!-- Iconos -->
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏗️</text></svg>">
-    
     <style>
-        /* ===== ESTILOS MOBILE-FIRST ===== */
+        /* ===== ESTILOS MÓVILES OPTIMIZADOS ===== */
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
             -webkit-tap-highlight-color: transparent;
         }
 
-        .app-container {
-            max-width: 100%;
-            min-height: 100vh;
-            display: none;
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+            height: 100vh;
+            height: -webkit-fill-available;
+            overflow-x: hidden;
         }
 
-        /* ===== HEADER MÓVIL ===== */
-        .mobile-header {
-            background: linear-gradient(135deg, #2c3e50 0%, #4a6491 100%);
-            color: white;
-            padding: 15px 20px;
-            position: sticky;
+        /* Header fijo para móvil */
+        .app-header {
+            position: fixed;
             top: 0;
-            z-index: 100;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            left: 0;
+            right: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
 
         .header-content {
@@ -63,65 +54,87 @@
             font-weight: 600;
         }
 
-        .header-actions {
-            display: flex;
-            gap: 10px;
-        }
-
-        .header-btn {
-            background: rgba(255, 255, 255, 0.2);
-            border: none;
-            color: white;
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
+        .user-badge {
+            background: rgba(255,255,255,0.2);
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 12px;
             display: flex;
             align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            font-size: 18px;
+            gap: 5px;
         }
 
-        /* ===== CONTENIDO PRINCIPAL ===== */
+        /* Contenido principal */
         .main-content {
-            padding: 20px;
-            padding-bottom: 80px; /* Espacio para navegación */
+            margin-top: 70px;
+            margin-bottom: 70px;
+            padding: 15px;
+            min-height: calc(100vh - 140px);
         }
 
-        .page {
-            display: none;
-            animation: fadeIn 0.3s ease;
+        /* Navegación inferior (como app nativa) */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            border-top: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 0;
+            z-index: 1000;
         }
 
-        .page.active {
-            display: block;
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 8px;
+            border: none;
+            background: none;
+            color: #666;
+            font-size: 10px;
+            width: 25%;
+            cursor: pointer;
+            transition: all 0.3s ease;
         }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+        .nav-item.active {
+            color: #667eea;
+            transform: translateY(-2px);
         }
 
-        /* ===== CARD STYLES ===== */
+        .nav-icon {
+            font-size: 20px;
+            margin-bottom: 4px;
+        }
+
+        /* Tarjetas para móvil */
         .card {
             background: white;
-            border-radius: 16px;
+            border-radius: 12px;
             padding: 20px;
             margin-bottom: 15px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            transition: transform 0.3s ease;
+        }
+
+        .card:active {
+            transform: scale(0.98);
         }
 
         .card-title {
             font-size: 16px;
             font-weight: 600;
-            color: #2c3e50;
-            margin-bottom: 15px;
+            margin-bottom: 10px;
+            color: #333;
             display: flex;
             align-items: center;
             gap: 8px;
         }
 
-        /* ===== FORMULARIOS MOBILE ===== */
+        /* Formularios móviles */
         .form-group {
             margin-bottom: 20px;
         }
@@ -130,165 +143,105 @@
             display: block;
             margin-bottom: 8px;
             font-weight: 500;
-            color: #495057;
+            color: #555;
             font-size: 14px;
         }
 
         .form-input {
             width: 100%;
-            padding: 16px;
-            border: 2px solid #e9ecef;
-            border-radius: 12px;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
             font-size: 16px;
-            transition: all 0.3s;
-            background: white;
-            -webkit-appearance: none;
+            background: #fff;
+            transition: border-color 0.3s;
         }
 
         .form-input:focus {
             outline: none;
-            border-color: #3498db;
-            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+            border-color: #667eea;
         }
 
-        /* Select móvil mejorado */
         select.form-input {
+            appearance: none;
             background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%23333' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
             background-repeat: no-repeat;
-            background-position: right 16px center;
+            background-position: right 15px center;
             background-size: 12px;
             padding-right: 40px;
         }
 
-        /* ===== BOTONES MOBILE ===== */
+        /* Botones para móvil */
         .btn {
             width: 100%;
-            padding: 18px;
+            padding: 14px;
             border: none;
-            border-radius: 12px;
+            border-radius: 8px;
             font-size: 16px;
-            font-weight: 600;
+            font-weight: 500;
             cursor: pointer;
+            transition: all 0.3s ease;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 10px;
-            transition: all 0.3s;
-            margin-top: 10px;
+            gap: 8px;
         }
 
         .btn-primary {
-            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            background: #667eea;
             color: white;
         }
 
         .btn-primary:active {
-            transform: scale(0.98);
-            opacity: 0.9;
+            background: #5a6fd8;
+            transform: translateY(1px);
         }
 
         .btn-success {
-            background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+            background: #2ecc71;
             color: white;
         }
 
         .btn-danger {
-            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            background: #e74c3c;
             color: white;
         }
 
-        .btn-secondary {
-            background: #f8f9fa;
-            color: #495057;
-            border: 2px solid #e9ecef;
-        }
-
-        .btn-sm {
-            padding: 12px 20px;
-            font-size: 14px;
-            width: auto;
-        }
-
-        /* ===== AUTOCOMPLETADO MOBILE ===== */
-        .autocomplete-container {
-            position: relative;
-        }
-
-        .autocomplete-list {
-            position: absolute;
-            top: 100%;
-            left: 0;
-            right: 0;
-            background: white;
-            border: 1px solid #ddd;
-            border-radius: 12px;
-            max-height: 300px;
-            overflow-y: auto;
-            z-index: 1000;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
-            display: none;
-        }
-
-        .autocomplete-list.active {
-            display: block;
-        }
-
-        .autocomplete-item {
+        /* Listas optimizadas para móvil */
+        .list-item {
             padding: 15px;
-            border-bottom: 1px solid #f0f0f0;
-            cursor: pointer;
-            transition: background 0.2s;
-            font-size: 15px;
+            background: white;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
-        .autocomplete-item:hover,
-        .autocomplete-item:active {
-            background: #f8f9fa;
-        }
-
-        .autocomplete-item:last-child {
+        .list-item:last-child {
             border-bottom: none;
         }
 
-        .autocomplete-item .proveedor-info {
-            display: block;
+        .list-item-content {
+            flex: 1;
+        }
+
+        .list-item-title {
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+
+        .list-item-subtitle {
             font-size: 12px;
             color: #666;
-            margin-top: 4px;
         }
 
-        /* ===== LISTA DE FALTANTES ===== */
-        .faltante-item {
-            background: white;
+        /* Badges para estado */
+        .badge {
+            padding: 4px 8px;
             border-radius: 12px;
-            padding: 15px;
-            margin-bottom: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-            border-left: 4px solid #3498db;
-        }
-
-        .faltante-item.sin-stock {
-            border-left-color: #e74c3c;
-        }
-
-        .faltante-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 10px;
-        }
-
-        .faltante-producto {
+            font-size: 10px;
             font-weight: 600;
-            font-size: 16px;
-            color: #2c3e50;
-        }
-
-        .faltante-badge {
-            padding: 4px 10px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
+            text-transform: uppercase;
         }
 
         .badge-pendiente {
@@ -296,25 +249,54 @@
             color: #856404;
         }
 
-        .badge-pedido {
-            background: #a3e4d7;
-            color: #0e6251;
+        .badge-urgente {
+            background: #fadbd8;
+            color: #78281f;
         }
 
-        .faltante-details {
-            font-size: 14px;
+        .badge-recibido {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        /* Estadísticas del dashboard */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 15px;
+            text-align: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        .stat-number {
+            font-size: 24px;
+            font-weight: 700;
+            color: #667eea;
+            margin: 5px 0;
+        }
+
+        .stat-label {
+            font-size: 11px;
             color: #666;
-            line-height: 1.5;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
-        /* ===== LOADING MOBILE ===== */
+        /* Loading overlay */
         .loading-overlay {
             position: fixed;
             top: 0;
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(255,255,255,0.95);
+            background: rgba(255,255,255,0.9);
             display: none;
             justify-content: center;
             align-items: center;
@@ -327,10 +309,10 @@
         }
 
         .spinner {
-            width: 50px;
-            height: 50px;
+            width: 40px;
+            height: 40px;
             border: 3px solid #f3f3f3;
-            border-top: 3px solid #3498db;
+            border-top: 3px solid #667eea;
             border-radius: 50%;
             animation: spin 1s linear infinite;
         }
@@ -340,679 +322,392 @@
             100% { transform: rotate(360deg); }
         }
 
-        /* ===== NOTIFICACIONES MOBILE ===== */
-        .notification {
+        /* Notificaciones toast */
+        .toast {
             position: fixed;
             top: 20px;
-            left: 20px;
-            right: 20px;
-            padding: 15px;
-            border-radius: 12px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-100px);
+            background: #333;
             color: white;
-            font-weight: 500;
-            z-index: 1001;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
-            animation: slideDown 0.3s ease;
-            display: flex;
-            align-items: center;
-            gap: 10px;
+            padding: 12px 20px;
+            border-radius: 8px;
+            z-index: 3000;
+            transition: transform 0.3s ease;
+            max-width: 90%;
+            text-align: center;
         }
 
-        @keyframes slideDown {
-            from { transform: translateY(-100%); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
         }
 
-        .notification.success {
+        .toast.success {
             background: #2ecc71;
-            border-left: 5px solid #27ae60;
         }
 
-        .notification.error {
+        .toast.error {
             background: #e74c3c;
-            border-left: 5px solid #c0392b;
         }
 
-        /* ===== NAVEGACIÓN INFERIOR ===== */
-        .bottom-nav {
+        /* Pantalla de login */
+        .login-screen {
             position: fixed;
-            bottom: 0;
+            top: 0;
             left: 0;
             right: 0;
-            background: white;
-            display: flex;
-            justify-content: space-around;
-            padding: 10px 0;
-            box-shadow: 0 -2px 20px rgba(0,0,0,0.1);
-            z-index: 100;
-        }
-
-        .nav-item {
+            bottom: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             display: flex;
             flex-direction: column;
-            align-items: center;
-            text-decoration: none;
-            color: #95a5a6;
-            padding: 8px 12px;
-            border-radius: 10px;
-            transition: all 0.3s;
-            min-width: 70px;
-        }
-
-        .nav-item.active {
-            color: #3498db;
-            background: rgba(52, 152, 219, 0.1);
-        }
-
-        .nav-icon {
-            font-size: 22px;
-            margin-bottom: 4px;
-        }
-
-        .nav-label {
-            font-size: 11px;
-            font-weight: 500;
-        }
-
-        /* ===== LOGIN SCREEN MOBILE ===== */
-        .login-screen {
-            display: flex;
             justify-content: center;
             align-items: center;
-            min-height: 100vh;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             padding: 20px;
+            z-index: 4000;
         }
 
-        .login-container {
+        .login-card {
             background: white;
             border-radius: 20px;
-            padding: 30px 25px;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.2);
+            padding: 30px;
             width: 100%;
-            max-width: 400px;
+            max-width: 350px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
         }
 
-        .login-logo {
+        .login-title {
             text-align: center;
             margin-bottom: 30px;
-        }
-
-        .login-logo h1 {
+            color: #333;
             font-size: 24px;
-            color: #2c3e50;
-            margin-bottom: 5px;
-        }
-
-        .login-logo p {
-            color: #7f8c8d;
-            font-size: 14px;
-        }
-
-        /* ===== ESTADÍSTICAS ===== */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
-            margin: 20px 0;
-        }
-
-        .stat-card {
-            background: white;
-            border-radius: 12px;
-            padding: 15px;
-            text-align: center;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-        }
-
-        .stat-number {
-            font-size: 28px;
-            font-weight: bold;
-            color: #3498db;
-            margin: 10px 0;
-        }
-
-        .stat-label {
-            font-size: 12px;
-            color: #7f8c8d;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        /* ===== PAGINACIÓN ===== */
-        .pagination {
             display: flex;
-            justify-content: center;
             align-items: center;
+            justify-content: center;
             gap: 10px;
-            margin: 20px 0;
-            padding: 15px;
-            background: #f8f9fa;
-            border-radius: 12px;
         }
 
-        .pagination-btn {
-            padding: 10px 20px;
-            background: white;
-            border: 2px solid #e9ecef;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.3s;
-        }
-
-        .pagination-btn:hover {
-            background: #3498db;
-            color: white;
-            border-color: #3498db;
-        }
-
-        .pagination-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        .pagination-info {
-            font-size: 14px;
-            color: #666;
-            text-align: center;
-        }
-
-        /* ===== INSTALL PROMPT ===== */
-        .install-prompt {
-            position: fixed;
-            bottom: 80px;
-            left: 20px;
-            right: 20px;
-            background: white;
-            border-radius: 16px;
-            padding: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-            z-index: 99;
-            animation: slideUp 0.3s ease;
+        /* Secciones ocultas/visibles */
+        .section {
             display: none;
+            animation: fadeIn 0.3s ease;
         }
 
-        .install-prompt.active {
+        .section.active {
             display: block;
         }
 
-        @keyframes slideUp {
-            from { transform: translateY(100%); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
 
-        .install-content {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            margin-bottom: 15px;
+        /* Estilos para scroll en móvil */
+        .scrollable {
+            -webkit-overflow-scrolling: touch;
         }
 
-        .install-icon {
-            font-size: 32px;
-            color: #3498db;
-        }
-
-        /* ===== CAMPOS PARA PROVEEDOR NUEVO ===== */
-        .nuevo-proveedor-container {
-            background: #f8f9fa;
-            border-radius: 12px;
-            padding: 15px;
-            margin: 15px 0;
-            border: 2px dashed #3498db;
-        }
-
-        .nuevo-proveedor-title {
-            font-size: 14px;
-            font-weight: 600;
-            color: #3498db;
-            margin-bottom: 10px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        /* ===== RESPONSIVE ===== */
-        @media (min-width: 768px) {
-            .app-container {
-                max-width: 400px;
-                margin: 0 auto;
-                box-shadow: 0 0 30px rgba(0,0,0,0.2);
+        /* Optimización para iOS */
+        @supports (-webkit-touch-callout: none) {
+            .main-content {
+                padding-bottom: env(safe-area-inset-bottom);
+            }
+            .bottom-nav {
+                padding-bottom: env(safe-area-inset-bottom);
             }
         }
-
-        /* ===== UTILITIES ===== */
-        .hidden {
-            display: none !important;
-        }
-
-        .text-center {
-            text-align: center;
-        }
-
-        .mt-2 { margin-top: 10px; }
-        .mt-3 { margin-top: 15px; }
-        .mt-4 { margin-top: 20px; }
-        .mb-2 { margin-bottom: 10px; }
-        .mb-3 { margin-bottom: 15px; }
-        .mb-4 { margin-bottom: 20px; }
     </style>
 </head>
 <body>
-    <!-- Login Screen -->
-    <div class="login-screen" id="loginScreen">
-        <div class="login-container">
-            <div class="login-logo">
-                <h1>🏗️ Ferretería Carnevale</h1>
-                <p>Reporte móvil de faltantes</p>
-            </div>
-            
-            <form id="loginForm">
-                <div class="form-group">
-                    <label for="loginEmail" class="form-label">Correo electrónico</label>
-                    <input type="email" id="loginEmail" class="form-input" required>
-                </div>
-                
-                <div class="form-group">
-                    <label for="loginPassword" class="form-label">Contraseña</label>
-                    <input type="password" id="loginPassword" class="form-input" required>
-                </div>
-                
-                <button type="submit" class="btn btn-primary">
-                    <span>📱</span> Iniciar Sesión
-                </button>
-                
-                <div class="text-center mt-3">
-                    <small style="color: #7f8c8d;">
-                        Usa las mismas credenciales que en la web
-                    </small>
-                </div>
-            </form>
-        </div>
-    </div>
+    <!-- Toast para notificaciones -->
+    <div id="toast" class="toast"></div>
 
-    <!-- Loading Overlay -->
+    <!-- Loading overlay -->
     <div class="loading-overlay" id="loadingOverlay">
         <div class="spinner"></div>
-        <div id="loadingMessage" style="margin-top: 15px; color: #3498db; font-weight: 500;"></div>
+        <div id="loadingMessage" style="margin-top: 10px; color: #667eea; font-size: 14px;"></div>
     </div>
 
-    <!-- Notification -->
-    <div id="notificationContainer"></div>
-
-    <!-- Install Prompt -->
-    <div class="install-prompt" id="installPrompt">
-        <div class="install-content">
-            <div class="install-icon">📱</div>
-            <div>
-                <strong>Instalar app</strong>
-                <p style="font-size: 14px; color: #666; margin-top: 5px;">
-                    Instala esta app para acceso rápido desde tu pantalla de inicio
-                </p>
+    <!-- Pantalla de Login -->
+    <div class="login-screen" id="loginScreen">
+        <div class="login-card">
+            <h1 class="login-title">🏗️ Carnevale</h1>
+            <p style="text-align: center; color: #666; margin-bottom: 30px;">App de Gestión de Faltantes</p>
+            
+            <div class="form-group">
+                <label class="form-label">Correo electrónico</label>
+                <input type="email" id="loginEmail" class="form-input" placeholder="tucorreo@ejemplo.com">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Contraseña</label>
+                <input type="password" id="loginPassword" class="form-input" placeholder="••••••••">
+            </div>
+            
+            <button class="btn btn-primary" onclick="login()" style="margin-top: 20px;">
+                Iniciar Sesión
+            </button>
+            
+            <div style="text-align: center; margin-top: 20px; font-size: 12px; color: #999;">
+                Usa tus credenciales del sistema
             </div>
         </div>
-        <div style="display: flex; gap: 10px;">
-            <button class="btn btn-secondary btn-sm" onclick="ocultarInstalacion()">
-                Ahora no
-            </button>
-            <button class="btn btn-primary btn-sm" onclick="instalarApp()">
-                Instalar
-            </button>
-        </div>
     </div>
 
-    <!-- Aplicación Principal -->
-    <div class="app-container" id="appContainer">
+    <!-- Aplicación Principal (oculta inicialmente) -->
+    <div id="appContainer" style="display: none;">
         <!-- Header -->
-        <header class="mobile-header">
+        <header class="app-header">
             <div class="header-content">
-                <div class="app-title" id="pageTitle">🏗️ Reportar Faltante</div>
-                <div class="header-actions">
-                    <button class="header-btn" onclick="actualizarDatos()" title="Actualizar">
-                        🔄
-                    </button>
-                    <button class="header-btn" onclick="logout()" title="Cerrar sesión">
-                        👋
-                    </button>
+                <div class="app-title">📦 Faltantes Carnevale</div>
+                <div class="user-badge">
+                    <span id="userInitial">U</span>
+                    <span id="userName">Usuario</span>
                 </div>
             </div>
         </header>
 
         <!-- Contenido Principal -->
         <main class="main-content">
-            <!-- Página 1: Dashboard -->
-            <div id="page-dashboard" class="page active">
+            <!-- Dashboard -->
+            <section id="dashboard" class="section active">
                 <div class="card">
-                    <h2 class="card-title">📊 Estado Actual</h2>
-                    
+                    <h2 class="card-title">📊 Resumen</h2>
                     <div class="stats-grid">
                         <div class="stat-card">
-                            <div class="stat-label">Faltantes Pendientes</div>
-                            <div class="stat-number" id="statPendientes">0</div>
+                            <div class="stat-number" id="statFaltantes">0</div>
+                            <div class="stat-label">Faltantes Activos</div>
                         </div>
                         <div class="stat-card">
-                            <div class="stat-label">Sin Stock</div>
-                            <div class="stat-number" id="statSinStock">0</div>
+                            <div class="stat-number" id="statUrgentes">0</div>
+                            <div class="stat-label">Urgentes</div>
                         </div>
                         <div class="stat-card">
-                            <div class="stat-label">Pedidos Hoy</div>
-                            <div class="stat-number" id="statPedidosHoy">0</div>
+                            <div class="stat-number" id="statProductos">0</div>
+                            <div class="stat-label">Productos</div>
                         </div>
                         <div class="stat-card">
-                            <div class="stat-label">Recibidos</div>
-                            <div class="stat-number" id="statRecibidos">0</div>
+                            <div class="stat-number" id="statProveedores">0</div>
+                            <div class="stat-label">Proveedores</div>
                         </div>
                     </div>
                 </div>
 
                 <div class="card">
                     <h2 class="card-title">⚡ Acciones Rápidas</h2>
-                    <button class="btn btn-primary" onclick="navegarA('faltante')">
+                    <button class="btn btn-primary" onclick="showSection('faltantes')" style="margin-bottom: 10px;">
                         ➕ Reportar Faltante
                     </button>
-                    <button class="btn btn-secondary mt-2" onclick="navegarA('lista')">
-                        📋 Ver Faltantes
+                    <button class="btn btn-success" onclick="showSection('productos')">
+                        📦 Ver Productos
                     </button>
                 </div>
 
                 <div class="card">
-                    <h2 class="card-title">📍 Sucursal Actual</h2>
-                    <div style="padding: 15px; background: #f8f9fa; border-radius: 10px;">
-                        <div style="font-size: 18px; font-weight: 600; color: #2c3e50;" id="sucursalActual">
-                            Cargando...
-                        </div>
-                        <button class="btn btn-secondary btn-sm mt-2" onclick="cambiarSucursal()">
-                            🔄 Cambiar Sucursal
-                        </button>
+                    <h2 class="card-title">📋 Faltantes Recientes</h2>
+                    <div id="recentFaltantesList">
+                        <!-- Se cargará dinámicamente -->
                     </div>
                 </div>
-            </div>
+            </section>
 
-            <!-- Página 2: Reportar Faltante -->
-            <div id="page-faltante" class="page">
+            <!-- Faltantes -->
+            <section id="faltantes" class="section">
                 <div class="card">
                     <h2 class="card-title">⚠️ Reportar Faltante</h2>
                     
                     <form id="faltanteForm" onsubmit="guardarFaltante(event)">
-                        <!-- Producto -->
                         <div class="form-group">
                             <label class="form-label">Producto *</label>
-                            <div class="autocomplete-container">
-                                <input type="text" id="faltanteProducto" class="form-input" 
-                                       placeholder="Escribe el nombre del producto..." 
-                                       autocomplete="off" required>
-                                <div id="productoDropdown" class="autocomplete-list"></div>
-                            </div>
+                            <input type="text" id="productoInput" class="form-input" 
+                                   placeholder="Nombre del producto" required 
+                                   list="productosList">
+                            <datalist id="productosList">
+                                <!-- Se llenará dinámicamente -->
+                            </datalist>
                         </div>
 
-                        <!-- Mensaje de producto -->
-                        <div id="mensajeProducto" class="hidden" style="margin: 10px 0; padding: 12px; border-radius: 10px; background: #e3f2fd;">
-                            <span id="textoMensaje"></span>
-                        </div>
-
-                        <!-- Campos para PROVEEDOR -->
-                        <div id="camposProveedorNuevo" class="nuevo-proveedor-container hidden">
-                            <div class="nuevo-proveedor-title">
-                                📝 Datos del Proveedor
-                                <span style="font-size: 11px; color: #666; font-weight: normal; margin-left: auto;">
-                                    ⚡ Usa proveedores existentes
-                                </span>
-                            </div>
-                            
-                            <!-- NOMBRE DEL PROVEEDOR CON AUTOCOMPLETADO -->
-                            <div class="form-group">
-                                <label class="form-label">Nombre del Proveedor *</label>
-                                <div class="autocomplete-container">
-                                    <input type="text" id="nuevoProveedorNombre" class="form-input" 
-                                           placeholder="Escribe para buscar proveedores..." autocomplete="off">
-                                    <div id="proveedorDropdown" class="autocomplete-list"></div>
-                                </div>
-                                <small style="color: #666; display: block; margin-top: 5px;">
-                                    ⚡ Selecciona un proveedor existente o escribe uno nuevo
-                                </small>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label class="form-label">Medio de contacto *</label>
-                                <select id="nuevoProveedorMedio" class="form-input">
-                                    <option value="WhatsApp">📱 WhatsApp</option>
-                                    <option value="Web">🌐 Web</option>
-                                    <option value="Manual">📞 Manual</option>
-                                    <option value="Email">📧 Email</option>
-                                    <option value="Teléfono">☎️ Teléfono</option>
-                                </select>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label class="form-label">Contacto/Link *</label>
-                                <input type="text" id="nuevoProveedorContacto" class="form-input" 
-                                       placeholder="Ej: 11 1234-5678 o https://proveedor.com">
-                            </div>
-                        </div>
-
-                        <!-- Cantidad y Stock -->
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
-                            <div class="form-group">
-                                <label class="form-label">Cantidad *</label>
-                                <input type="number" id="faltanteCantidad" class="form-input" 
-                                       value="1" min="1" max="100" required>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label class="form-label">Estado Stock *</label>
-                                <select id="faltanteStock" class="form-input" required>
-                                    <option value="Quedan Pocos">🟡 Pocos</option>
-                                    <option value="Sin Stock">🔴 Sin Stock</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <!-- Sucursal -->
                         <div class="form-group">
-                            <label class="form-label">Sucursal *</label>
-                            <select id="faltanteSucursal" class="form-input" required>
-                                <!-- Se llena dinámicamente -->
+                            <label class="form-label">Proveedor *</label>
+                            <select id="proveedorSelect" class="form-input" required>
+                                <option value="">Seleccionar proveedor...</option>
+                                <!-- Se llenará dinámicamente -->
                             </select>
                         </div>
 
-                        <!-- Campos ocultos -->
-                        <input type="hidden" id="productoExistenteId">
-                        <input type="hidden" id="productoExistenteProveedor">
-                        <input type="hidden" id="productoExistenteMedio">
-                        <input type="hidden" id="productoExistenteContacto">
+                        <div class="form-group">
+                            <label class="form-label">Cantidad *</label>
+                            <input type="number" id="cantidadInput" class="form-input" 
+                                   value="1" min="1" max="100" required>
+                        </div>
 
-                        <!-- Botones -->
-                        <button type="submit" class="btn btn-success">
+                        <div class="form-group">
+                            <label class="form-label">Estado del Stock *</label>
+                            <select id="estadoStockSelect" class="form-input" required>
+                                <option value="Quedan Pocos">🟡 Quedan Pocos</option>
+                                <option value="Sin Stock">🔴 Sin Stock (Urgente)</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Notas (opcional)</label>
+                            <textarea id="notasInput" class="form-input" 
+                                      placeholder="Observaciones adicionales..." 
+                                      rows="3"></textarea>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">
                             ✅ Guardar Faltante
-                        </button>
-                        <button type="button" class="btn btn-secondary mt-2" onclick="limpiarFormularioFaltante()">
-                            🔄 Nuevo
                         </button>
                     </form>
                 </div>
-            </div>
+            </section>
 
-            <!-- Página 3: Lista de Faltantes -->
-            <div id="page-lista" class="page">
+            <!-- Productos -->
+            <section id="productos" class="section">
                 <div class="card">
-                    <h2 class="card-title">📋 Faltantes Pendientes</h2>
+                    <h2 class="card-title">📦 Gestión de Productos</h2>
                     
-                    <div style="display: flex; gap: 10px; margin-bottom: 15px;">
-                        <button class="btn btn-secondary btn-sm" onclick="filtrarFaltantes('todos')">
-                            Todos
-                        </button>
-                        <button class="btn btn-secondary btn-sm" onclick="filtrarFaltantes('sin-stock')">
-                            🔴 Sin Stock
-                        </button>
-                    </div>
-                    
-                    <div id="listaFaltantes">
-                        <!-- Los faltantes se cargarán aquí -->
-                    </div>
-                    
-                    <!-- Paginación -->
-                    <div id="paginacionFaltantes" class="pagination hidden">
-                        <button class="pagination-btn" onclick="cambiarPaginaFaltantes(-1)" id="btnAnterior">← Anterior</button>
-                        <div class="pagination-info">
-                            <span id="paginaActual">1</span> de <span id="totalPaginas">1</span>
-                        </div>
-                        <button class="pagination-btn" onclick="cambiarPaginaFaltantes(1)" id="btnSiguiente">Siguiente →</button>
-                    </div>
-                </div>
-            </div>
+                    <button class="btn btn-primary" onclick="mostrarFormularioProducto()" style="margin-bottom: 20px;">
+                        ➕ Nuevo Producto
+                    </button>
 
-            <!-- Página 4: Catálogo de Productos -->
-            <div id="page-catalogo" class="page">
-                <div class="card">
-                    <h2 class="card-title">📦 Catálogo de Productos</h2>
-                    
-                    <!-- Filtros -->
-                    <div style="display: flex; gap: 10px; margin-bottom: 15px;">
-                        <input type="text" id="buscarProducto" class="form-input" placeholder="Buscar producto..." 
-                               style="flex: 1;" oninput="filtrarCatalogo()">
-                        <select id="filtroProveedor" class="form-input" style="width: auto;" onchange="filtrarCatalogo()">
-                            <option value="">Todos los proveedores</option>
-                        </select>
+                    <!-- Formulario de producto (oculto inicialmente) -->
+                    <div id="productoFormContainer" style="display: none;">
+                        <form id="productoForm" onsubmit="guardarProducto(event)">
+                            <div class="form-group">
+                                <label class="form-label">Nombre del Producto *</label>
+                                <input type="text" id="nombreProducto" class="form-input" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Proveedor Principal *</label>
+                                <select id="proveedorProducto" class="form-input" required>
+                                    <option value="">Seleccionar proveedor...</option>
+                                    <!-- Se llenará dinámicamente -->
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Código (opcional)</label>
+                                <input type="text" id="codigoProducto" class="form-input" 
+                                       placeholder="Código interno o SKU">
+                            </div>
+
+                            <div class="button-group" style="display: flex; gap: 10px;">
+                                <button type="submit" class="btn btn-primary" style="flex: 1;">
+                                    💾 Guardar
+                                </button>
+                                <button type="button" class="btn" onclick="ocultarFormularioProducto()" style="flex: 1;">
+                                    Cancelar
+                                </button>
+                            </div>
+                        </form>
                     </div>
-                    
+
                     <!-- Lista de productos -->
-                    <div id="listaProductos">
-                        <!-- Los productos se cargarán aquí -->
+                    <div id="listaProductos" style="margin-top: 20px;">
+                        <!-- Se cargará dinámicamente -->
                     </div>
-                    
-                    <!-- Paginación -->
-                    <div class="pagination">
-                        <button class="pagination-btn" onclick="cambiarPagina(-1)" id="btnPrev">← Anterior</button>
-                        <div class="pagination-info">
-                            <span id="currentPage">1</span> de <span id="totalPages">1</span>
-                            <div style="font-size: 12px;">Mostrando <span id="showingCount">0</span> de <span id="totalCount">0</span> productos</div>
-                        </div>
-                        <button class="pagination-btn" onclick="cambiarPagina(1)" id="btnNext">Siguiente →</button>
-                    </div>
-                    
-                    <!-- Botón para móviles -->
-                    <button class="btn btn-secondary mt-2" id="btnCargarMas" onclick="cargarMasProductos()" style="display: none;">
-                        📱 Cargar más productos
-                    </button>
                 </div>
-            </div>
+            </section>
 
-            <!-- Página 5: Perfil -->
-            <div id="page-perfil" class="page">
+            <!-- Proveedores -->
+            <section id="proveedores" class="section">
                 <div class="card">
-                    <h2 class="card-title">👤 Mi Perfil</h2>
+                    <h2 class="card-title">👥 Gestión de Proveedores</h2>
                     
-                    <div style="margin-bottom: 20px;">
-                        <div style="font-size: 14px; color: #7f8c8d;">Usuario</div>
-                        <div style="font-size: 18px; font-weight: 600; margin-top: 5px;" id="usuarioEmail">
-                            cargando...
-                        </div>
-                    </div>
-                    
-                    <div style="margin-bottom: 20px;">
-                        <div style="font-size: 14px; color: #7f8c8d;">Sucursal</div>
-                        <div style="font-size: 18px; font-weight: 600; margin-top: 5px;" id="usuarioSucursal">
-                            cargando...
-                        </div>
-                    </div>
-                    
-                    <button class="btn btn-secondary" onclick="cambiarSucursal()">
-                        🔄 Cambiar Sucursal
+                    <button class="btn btn-primary" onclick="mostrarFormularioProveedor()" style="margin-bottom: 20px;">
+                        👥 Nuevo Proveedor
                     </button>
-                    
-                    <button class="btn btn-danger mt-2" onclick="logout()">
-                        👋 Cerrar Sesión
-                    </button>
-                </div>
 
-                <div class="card">
-                    <h2 class="card-title">📈 Análisis Inteligente</h2>
-                    
-                    <div style="margin-bottom: 15px;">
-                        <div style="font-size: 14px; color: #7f8c8d;">Productos críticos</div>
-                        <div style="font-size: 28px; font-weight: bold; color: #e74c3c;" id="productosCriticos">
-                            0
-                        </div>
+                    <!-- Formulario de proveedor -->
+                    <div id="proveedorFormContainer" style="display: none;">
+                        <form id="proveedorForm" onsubmit="guardarProveedor(event)">
+                            <div class="form-group">
+                                <label class="form-label">Nombre *</label>
+                                <input type="text" id="nombreProveedor" class="form-input" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Contacto *</label>
+                                <input type="text" id="contactoProveedor" class="form-input" 
+                                       placeholder="Teléfono o email" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Medio de Pedido</label>
+                                <select id="medioProveedor" class="form-input">
+                                    <option value="WhatsApp">📱 WhatsApp</option>
+                                    <option value="Teléfono">📞 Teléfono</option>
+                                    <option value="Email">✉️ Email</option>
+                                </select>
+                            </div>
+
+                            <div class="button-group" style="display: flex; gap: 10px;">
+                                <button type="submit" class="btn btn-primary" style="flex: 1;">
+                                    💾 Guardar
+                                </button>
+                                <button type="button" class="btn" onclick="ocultarFormularioProveedor()" style="flex: 1;">
+                                    Cancelar
+                                </button>
+                            </div>
+                        </form>
                     </div>
-                    
-                    <div style="margin-bottom: 15px;">
-                        <div style="font-size: 14px; color: #7f8c8d;">Tendencias últimos 30 días</div>
-                        <div style="font-size: 16px; margin-top: 5px;" id="tendenciasAnalisis">
-                            Cargando análisis...
-                        </div>
+
+                    <!-- Lista de proveedores -->
+                    <div id="listaProveedores" style="margin-top: 20px;">
+                        <!-- Se cargará dinámicamente -->
                     </div>
-                    
-                    <button class="btn btn-primary" onclick="ejecutarAnalisisIA()">
-                        🤖 Ejecutar Análisis IA
-                    </button>
-                    
-                    <small style="display: block; margin-top: 10px; color: #666; text-align: center;">
-                        Última actualización: <span id="ultimoAnalisis">-</span>
-                    </small>
                 </div>
-            </div>
+            </section>
         </main>
 
         <!-- Navegación Inferior -->
         <nav class="bottom-nav">
-            <a href="javascript:void(0)" class="nav-item active" onclick="navegarA('dashboard')">
+            <button class="nav-item active" onclick="showSection('dashboard')">
                 <span class="nav-icon">📊</span>
-                <span class="nav-label">Inicio</span>
-            </a>
-            <a href="javascript:void(0)" class="nav-item" onclick="navegarA('faltante')">
-                <span class="nav-icon">➕</span>
-                <span class="nav-label">Reportar</span>
-            </a>
-            <a href="javascript:void(0)" class="nav-item" onclick="navegarA('lista')">
-                <span class="nav-icon">📋</span>
-                <span class="nav-label">Faltantes</span>
-            </a>
-            <a href="javascript:void(0)" class="nav-item" onclick="navegarA('catalogo')">
+                <span>Inicio</span>
+            </button>
+            <button class="nav-item" onclick="showSection('faltantes')">
+                <span class="nav-icon">⚠️</span>
+                <span>Faltantes</span>
+            </button>
+            <button class="nav-item" onclick="showSection('productos')">
                 <span class="nav-icon">📦</span>
-                <span class="nav-label">Catálogo</span>
-            </a>
-            <a href="javascript:void(0)" class="nav-item" onclick="navegarA('perfil')">
-                <span class="nav-icon">👤</span>
-                <span class="nav-label">Perfil</span>
-            </a>
+                <span>Productos</span>
+            </button>
+            <button class="nav-item" onclick="showSection('proveedores')">
+                <span class="nav-icon">👥</span>
+                <span>Proveedores</span>
+            </button>
         </nav>
     </div>
 
-    <!-- Service Worker Registration -->
+    <!-- Manifest para PWA -->
     <script>
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', function() {
-                navigator.serviceWorker.register('sw-mobile.js')
-                    .then(function(registration) {
-                        console.log('ServiceWorker registrado con éxito:', registration.scope);
-                    })
-                    .catch(function(error) {
-                        console.log('Error registrando ServiceWorker:', error);
-                    });
-            });
-        }
-
-        let deferredPrompt;
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-            setTimeout(() => {
-                mostrarInstalacion();
-            }, 3000);
-        });
-
-        window.addEventListener('appinstalled', () => {
-            console.log('App instalada');
-            ocultarInstalacion();
-        });
+        const manifest = {
+            "name": "Faltantes Carnevale",
+            "short_name": "Carnevale",
+            "description": "App móvil para gestión de faltantes",
+            "start_url": "/",
+            "display": "standalone",
+            "background_color": "#667eea",
+            "theme_color": "#667eea",
+            "icons": [
+                {
+                    "src": "https://cdn.jsdelivr.net/npm/twemoji@14.0.2/assets/svg/1f3d7.svg",
+                    "sizes": "192x192",
+                    "type": "image/svg+xml"
+                }
+            ]
+        };
     </script>
 
-    <!-- Firebase y Lógica Principal - VERSIÓN OPTIMIZADA -->
     <script>
         // ============================================================================
-        // CONFIGURACIÓN DE FIREBASE
+        // CONFIGURACIÓN DE FIREBASE - OPTIMIZADA PARA MÓVIL
         // ============================================================================
+        
         const firebaseConfig = {
             apiKey: "AIzaSyDIvu4JsAYAwccP9yTKERIzEtli2H86lSk",
             authDomain: "ferreteria-sistema.firebaseapp.com",
@@ -1022,71 +717,35 @@
             appId: "1:122400105302:web:589b241839d43d1971ecf7"
         };
 
+        // Inicializar Firebase con persistencia habilitada [citation:7]
         try {
             if (!firebase.apps.length) {
                 firebase.initializeApp(firebaseConfig);
+                
+                // Habilitar persistencia offline para mejor experiencia móvil
+                firebase.firestore().enablePersistence()
+                    .catch((err) => {
+                        if (err.code === 'failed-precondition') {
+                            console.log('Persistencia disponible solo en una pestaña');
+                        } else if (err.code === 'unimplemented') {
+                            console.log('Navegador no soporta persistencia');
+                        }
+                    });
             }
         } catch (error) {
-            console.log("Error inicializando Firebase:", error);
+            console.error("Error inicializando Firebase:", error);
         }
         
         const db = firebase.firestore();
         const auth = firebase.auth();
 
         // ============================================================================
-        // VARIABLES GLOBALES OPTIMIZADAS
+        // VARIABLES GLOBALES
         // ============================================================================
         let usuarioActual = null;
         let productos = [];
         let proveedores = [];
         let faltantes = [];
-        let sucursales = ['Ferretería Carnevale', 'Ferretería Forza'];
-        let sucursalActual = sucursales[0];
-        
-        // =============================================
-        // SISTEMA DE CACHÉ PARA OPTIMIZACIÓN
-        // =============================================
-        let cacheAutocompletado = new Map(); // Cache para autocompletado
-        let cacheProductos = new Map();      // Cache para productos
-        let cacheAnalisis = new Map();       // Cache para análisis
-        let timeoutAutocompletado = null;    // Para debounce
-        
-        // =============================================
-        // PAGINACIÓN OPTIMIZADA
-        // =============================================
-        let paginaActual = 1;
-        const productosPorPagina = 50;
-        let productosTotales = 0;
-        let productoListener = null;
-        let faltanteListener = null;
-        let proveedorListener = null;
-
-        // ============================================================================
-        // FUNCIONES PWA
-        // ============================================================================
-        function mostrarInstalacion() {
-            if (deferredPrompt && !window.matchMedia('(display-mode: standalone)').matches) {
-                document.getElementById('installPrompt').classList.add('active');
-            }
-        }
-
-        function ocultarInstalacion() {
-            document.getElementById('installPrompt').classList.remove('active');
-        }
-
-        async function instalarApp() {
-            if (!deferredPrompt) return;
-            
-            deferredPrompt.prompt();
-            const { outcome } = await deferredPrompt.userChoice;
-            
-            if (outcome === 'accepted') {
-                console.log('Usuario instaló la PWA');
-            }
-            
-            deferredPrompt = null;
-            ocultarInstalacion();
-        }
 
         // ============================================================================
         // FUNCIONES DE UTILIDAD
@@ -1108,88 +767,96 @@
             }
         }
 
-        function mostrarNotificacion(mensaje, tipo = 'success', duracion = 4000) {
-            const container = document.getElementById('notificationContainer');
-            
-            container.innerHTML = '';
-            
-            const notification = document.createElement('div');
-            notification.className = `notification ${tipo}`;
-            notification.innerHTML = `<span>${mensaje}</span>`;
-            
-            container.appendChild(notification);
+        function mostrarToast(mensaje, tipo = 'success') {
+            const toast = document.getElementById('toast');
+            toast.textContent = mensaje;
+            toast.className = `toast ${tipo}`;
+            toast.classList.add('show');
             
             setTimeout(() => {
-                if (notification.parentNode) {
-                    notification.remove();
-                }
-            }, duracion);
+                toast.classList.remove('show');
+            }, 3000);
         }
 
         function formatearFecha(fecha) {
-            if (!fecha) return '-';
+            if (!fecha) return '';
             if (fecha.toDate) {
                 fecha = fecha.toDate();
             }
-            return fecha.toLocaleDateString('es-AR') + ' ' + fecha.toLocaleTimeString('es-AR', {hour: '2-digit', minute:'2-digit'});
+            
+            const ahora = new Date();
+            const diffMs = ahora - fecha;
+            const diffMin = Math.floor(diffMs / 60000);
+            const diffHoras = Math.floor(diffMin / 60);
+            const diffDias = Math.floor(diffHoras / 24);
+            
+            if (diffMin < 60) {
+                return `Hace ${diffMin} min`;
+            } else if (diffHoras < 24) {
+                return `Hace ${diffHoras} h`;
+            } else if (diffDias < 7) {
+                return `Hace ${diffDias} d`;
+            } else {
+                return fecha.toLocaleDateString('es-AR');
+            }
         }
 
         // ============================================================================
-        // GESTIÓN DE SUCURSAL
+        // NAVEGACIÓN
         // ============================================================================
-        function cargarSucursal() {
-            const guardada = localStorage.getItem('sucursalMobile');
-            if (guardada && sucursales.includes(guardada)) {
-                sucursalActual = guardada;
-            }
-            actualizarUISucursal();
-        }
-
-        function guardarSucursal(sucursal) {
-            localStorage.setItem('sucursalMobile', sucursal);
-            sucursalActual = sucursal;
-            actualizarUISucursal();
-            mostrarNotificacion(`Sucursal cambiada a: ${sucursal}`);
+        function showSection(sectionId) {
+            // Ocultar todas las secciones
+            document.querySelectorAll('.section').forEach(section => {
+                section.classList.remove('active');
+            });
             
-            // Recargar datos con la nueva sucursal
-            if (faltanteListener) {
-                faltanteListener(); // Detener listener anterior
-            }
-            configurarListenersTiempoReal();
-        }
-
-        function cambiarSucursal() {
-            const indexActual = sucursales.indexOf(sucursalActual);
-            const nuevaIndex = (indexActual + 1) % sucursales.length;
-            guardarSucursal(sucursales[nuevaIndex]);
-        }
-
-        function actualizarUISucursal() {
-            document.getElementById('sucursalActual').textContent = sucursalActual;
-            document.getElementById('usuarioSucursal').textContent = sucursalActual;
+            // Actualizar navegación
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
             
-            // Actualizar select en formulario
-            const select = document.getElementById('faltanteSucursal');
-            if (select) {
-                select.innerHTML = '';
-                sucursales.forEach(s => {
-                    const option = document.createElement('option');
-                    option.value = s;
-                    option.textContent = s;
-                    if (s === sucursalActual) option.selected = true;
-                    select.appendChild(option);
-                });
+            // Mostrar sección seleccionada
+            document.getElementById(sectionId).classList.add('active');
+            
+            // Marcar item activo en navegación
+            document.querySelectorAll('.nav-item').forEach(item => {
+                if (item.textContent.includes(
+                    sectionId === 'dashboard' ? 'Inicio' :
+                    sectionId === 'faltantes' ? 'Faltantes' :
+                    sectionId === 'productos' ? 'Productos' : 'Proveedores'
+                )) {
+                    item.classList.add('active');
+                }
+            });
+            
+            // Cargar datos específicos de la sección
+            switch(sectionId) {
+                case 'dashboard':
+                    actualizarDashboard();
+                    break;
+                case 'faltantes':
+                    cargarDatosFaltantes();
+                    break;
+                case 'productos':
+                    cargarProductos();
+                    break;
+                case 'proveedores':
+                    cargarProveedores();
+                    break;
             }
         }
 
         // ============================================================================
         // AUTENTICACIÓN
         // ============================================================================
-        document.getElementById('loginForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
+        async function login() {
             const email = document.getElementById('loginEmail').value;
             const password = document.getElementById('loginPassword').value;
+            
+            if (!email || !password) {
+                mostrarToast('Completa todos los campos', 'error');
+                return;
+            }
             
             mostrarLoading(true, 'Iniciando sesión...');
             
@@ -1197,10 +864,18 @@
                 const userCredential = await auth.signInWithEmailAndPassword(email, password);
                 usuarioActual = userCredential.user;
                 
-                await verificarUsuarioFirestore(usuarioActual);
+                // Ocultar login y mostrar app
+                document.getElementById('loginScreen').style.display = 'none';
+                document.getElementById('appContainer').style.display = 'block';
                 
-                mostrarNotificacion('¡Bienvenido! 👋');
-                inicializarApp();
+                // Actualizar UI de usuario
+                document.getElementById('userName').textContent = usuarioActual.email.split('@')[0];
+                document.getElementById('userInitial').textContent = usuarioActual.email[0].toUpperCase();
+                
+                // Inicializar datos
+                inicializarDatos();
+                
+                mostrarToast('¡Bienvenido!');
                 
             } catch (error) {
                 console.error('Error en login:', error);
@@ -1210,51 +885,30 @@
                 } else if (error.code === 'auth/wrong-password') {
                     mensajeError = 'Contraseña incorrecta';
                 }
-                mostrarNotificacion(mensajeError, 'error');
+                mostrarToast(mensajeError, 'error');
             } finally {
                 mostrarLoading(false);
-            }
-        });
-
-        async function verificarUsuarioFirestore(user) {
-            try {
-                const userDoc = await db.collection('usuarios').doc(user.uid).get();
-                
-                if (!userDoc.exists) {
-                    await db.collection('usuarios').doc(user.uid).set({
-                        email: user.email,
-                        nombre: user.email.split('@')[0],
-                        fechaRegistro: firebase.firestore.FieldValue.serverTimestamp(),
-                        sucursal: sucursalActual,
-                        appMobile: true
-                    });
-                }
-                
-                return userDoc;
-            } catch (error) {
-                console.error('Error verificando usuario:', error);
-                return null;
             }
         }
 
         function logout() {
             if (confirm('¿Cerrar sesión?')) {
-                // Detener todos los listeners
-                if (productoListener) productoListener();
-                if (faltanteListener) faltanteListener();
-                if (proveedorListener) proveedorListener();
-                
                 auth.signOut();
                 location.reload();
             }
         }
 
         // Observador de autenticación
-        auth.onAuthStateChanged(async (user) => {
+        auth.onAuthStateChanged((user) => {
             if (user) {
                 usuarioActual = user;
-                cargarSucursal();
-                inicializarApp();
+                document.getElementById('loginScreen').style.display = 'none';
+                document.getElementById('appContainer').style.display = 'block';
+                
+                document.getElementById('userName').textContent = user.email.split('@')[0];
+                document.getElementById('userInitial').textContent = user.email[0].toUpperCase();
+                
+                inicializarDatos();
             } else {
                 document.getElementById('loginScreen').style.display = 'flex';
                 document.getElementById('appContainer').style.display = 'none';
@@ -1262,1308 +916,541 @@
         });
 
         // ============================================================================
-        // INICIALIZACIÓN DE LA APP OPTIMIZADA
+        // INICIALIZACIÓN DE DATOS
         // ============================================================================
-        function inicializarApp() {
-            document.getElementById('loginScreen').style.display = 'none';
-            document.getElementById('appContainer').style.display = 'block';
-            document.getElementById('usuarioEmail').textContent = usuarioActual.email;
+        function inicializarDatos() {
+            // Configurar listeners en tiempo real para mejor performance [citation:3]
+            configurarListeners();
             
-            cargarDatosIniciales();
-            configurarListenersTiempoReal();
+            // Cargar datos iniciales
+            cargarProductos();
+            cargarProveedores();
+            cargarFaltantes();
             
-            // Ejecutar análisis inicial
-            setTimeout(() => ejecutarAnalisisIA(), 2000);
+            // Actualizar dashboard
+            actualizarDashboard();
         }
 
-        async function cargarDatosIniciales() {
-            mostrarLoading(true, 'Cargando datos iniciales...');
-            
-            try {
-                // Cargar productos con paginación (solo 50 iniciales)
-                await cargarProductosPaginados(1);
-                
-                // Cargar proveedores (solo 100 más recientes)
-                const snapshotProveedores = await db.collection('proveedores')
-                    .where('activo', '==', true)
-                    .orderBy('fechaCreacion', 'desc')
-                    .limit(100)
-                    .get();
-                
-                proveedores = [];
-                snapshotProveedores.forEach(doc => {
-                    proveedores.push({ id: doc.id, ...doc.data() });
-                });
-                
-                // Actualizar dropdown de proveedores
-                actualizarDropdownProveedores();
-                
-                // Cargar faltantes (solo 100 más recientes)
-                const snapshotFaltantes = await db.collection('faltantes')
-                    .where('sucursal', '==', sucursalActual)
-                    .orderBy('fechaReporte', 'desc')
-                    .limit(100)
-                    .get();
-                
-                faltantes = [];
-                snapshotFaltantes.forEach(doc => {
-                    faltantes.push({ id: doc.id, ...doc.data() });
-                });
-                
-                actualizarDashboard();
-                actualizarListaFaltantes();
-                
-            } catch (error) {
-                console.error('Error cargando datos iniciales:', error);
-                mostrarNotificacion('Error cargando datos iniciales', 'error');
-            } finally {
-                mostrarLoading(false);
-            }
-        }
-
-        // ============================================================================
-        // LISTENERS TIEMPO REAL OPTIMIZADOS
-        // ============================================================================
-        function configurarListenersTiempoReal() {
-            console.log('Configurando listeners optimizados...');
-            
-            // PRODUCTOS: Solo 1,000 productos activos más recientes
-            productoListener = db.collection('productos')
+        function configurarListeners() {
+            // Productos - con límite para móvil [citation:8]
+            db.collection('productos')
                 .where('activo', '==', true)
-                .orderBy('fechaActualizacion', 'desc')
-                .limit(1000)
+                .limit(50)
                 .onSnapshot((snapshot) => {
                     productos = [];
                     snapshot.forEach(doc => {
                         productos.push({ id: doc.id, ...doc.data() });
                     });
-                    
-                    // Actualizar contador total
-                    productosTotales = productos.length;
-                    
-                    // Actualizar UI si estamos en la página de catálogo
-                    if (document.getElementById('page-catalogo').classList.contains('active')) {
-                        mostrarProductosPaginados();
-                    }
-                }, (error) => {
-                    console.error('Error en listener de productos:', error);
+                    actualizarListaProductosUI();
+                    actualizarSelectsProductos();
                 });
             
-            // FALTANTES: Solo 500 faltantes más recientes por sucursal
-            faltanteListener = db.collection('faltantes')
-                .where('sucursal', '==', sucursalActual)
+            // Proveedores - con límite
+            db.collection('proveedores')
                 .where('activo', '==', true)
-                .orderBy('fechaReporte', 'desc')
-                .limit(500)
-                .onSnapshot((snapshot) => {
-                    faltantes = [];
-                    snapshot.forEach(doc => {
-                        faltantes.push({ id: doc.id, ...doc.data() });
-                    });
-                    
-                    actualizarDashboard();
-                    
-                    // Actualizar lista si estamos en la página de faltantes
-                    if (document.getElementById('page-lista').classList.contains('active')) {
-                        actualizarListaFaltantes();
-                    }
-                }, (error) => {
-                    console.error('Error en listener de faltantes:', error);
-                });
-            
-            // PROVEEDORES: Solo 200 proveedores activos más recientes
-            proveedorListener = db.collection('proveedores')
-                .where('activo', '==', true)
-                .orderBy('fechaCreacion', 'desc')
-                .limit(200)
+                .limit(30)
                 .onSnapshot((snapshot) => {
                     proveedores = [];
                     snapshot.forEach(doc => {
                         proveedores.push({ id: doc.id, ...doc.data() });
                     });
-                    
-                    // Actualizar dropdown de proveedores
-                    actualizarDropdownProveedores();
-                    
-                    // Actualizar autocompletado de proveedores
-                    configurarAutocompletadoProveedores();
-                }, (error) => {
-                    console.error('Error en listener de proveedores:', error);
+                    actualizarListaProveedoresUI();
+                    actualizarSelectsProveedores();
                 });
-        }
-
-        // ============================================================================
-        // AUTOCOMPLETADO DE PRODUCTOS OPTIMIZADO
-        // ============================================================================
-        function configurarAutocompletadoProductos() {
-            const input = document.getElementById('faltanteProducto');
-            if (!input) return;
             
-            // Limpiar timeout anterior
-            if (timeoutAutocompletado) {
-                clearTimeout(timeoutAutocompletado);
-            }
+            // Faltantes activos - solo los últimos 30 días para móvil
+            const ultimos30Dias = new Date();
+            ultimos30Dias.setDate(ultimos30Dias.getDate() - 30);
             
-            input.addEventListener('input', function(e) {
-                const valor = e.target.value.trim();
-                const cacheKey = `autocomplete_${valor.toLowerCase()}`;
-                
-                // Usar debounce de 300ms
-                clearTimeout(timeoutAutocompletado);
-                timeoutAutocompletado = setTimeout(async () => {
-                    // Verificar caché (válido por 5 minutos)
-                    if (cacheAutocompletado.has(cacheKey) && 
-                        Date.now() - cacheAutocompletado.get(cacheKey).timestamp < 300000) {
-                        mostrarResultadosAutocompletadoProductos(cacheAutocompletado.get(cacheKey).data);
-                        return;
-                    }
-                    
-                    if (!valor || valor.length < 2) {
-                        document.getElementById('productoDropdown').classList.remove('active');
-                        return;
-                    }
-                    
-                    try {
-                        // CONSULTA OPTIMIZADA: Usa índice compuesto y solo trae 20 resultados
-                        const query = db.collection('productos')
-                            .where('activo', '==', true)
-                            .orderBy('nombre')
-                            .startAt(valor)
-                            .endAt(valor + '\uf8ff')
-                            .limit(20);
-                        
-                        const snapshot = await query.get();
-                        const resultados = [];
-                        snapshot.forEach(doc => {
-                            resultados.push({ id: doc.id, ...doc.data() });
-                        });
-                        
-                        // Guardar en caché
-                        cacheAutocompletado.set(cacheKey, {
-                            data: resultados,
-                            timestamp: Date.now()
-                        });
-                        
-                        mostrarResultadosAutocompletadoProductos(resultados);
-                    } catch (error) {
-                        console.error('Error en autocompletado:', error);
-                        // Fallback: buscar en productos ya cargados
-                        const resultados = productos.filter(p => 
-                            p.nombre && p.nombre.toLowerCase().includes(valor.toLowerCase())
-                        ).slice(0, 10);
-                        
-                        mostrarResultadosAutocompletadoProductos(resultados);
-                    }
-                }, 300);
-            });
-            
-            // Cerrar dropdown al hacer clic fuera
-            document.addEventListener('click', (e) => {
-                const dropdown = document.getElementById('productoDropdown');
-                if (!input.contains(e.target) && dropdown && !dropdown.contains(e.target)) {
-                    dropdown.classList.remove('active');
-                }
-            });
-            
-            // Manejar selección con teclado
-            input.addEventListener('keydown', function(e) {
-                const dropdown = document.getElementById('productoDropdown');
-                if (e.key === 'Enter' && dropdown.classList.contains('active')) {
-                    e.preventDefault();
-                    const firstItem = dropdown.querySelector('.autocomplete-item');
-                    if (firstItem) {
-                        firstItem.click();
-                    }
-                }
-            });
-        }
-
-        function mostrarResultadosAutocompletadoProductos(resultados) {
-            const dropdown = document.getElementById('productoDropdown');
-            if (!dropdown) return;
-            
-            dropdown.innerHTML = '';
-            
-            if (resultados.length === 0) {
-                dropdown.classList.remove('active');
-                return;
-            }
-            
-            resultados.slice(0, 10).forEach(producto => {
-                if (!producto.nombre || producto.nombre.trim().length === 0) return;
-                
-                const div = document.createElement('div');
-                div.className = 'autocomplete-item';
-                
-                let html = producto.nombre;
-                if (producto.proveedor) {
-                    html += `<small style="color:#666; display:block; margin-top:2px;">Proveedor: ${producto.proveedor}</small>`;
-                }
-                if (producto.codigo) {
-                    html += `<small style="color:#999; display:block;">Código: ${producto.codigo}</small>`;
-                }
-                
-                div.innerHTML = html;
-                
-                div.addEventListener('click', () => {
-                    seleccionarProducto(producto);
-                });
-                
-                dropdown.appendChild(div);
-            });
-            
-            dropdown.classList.add('active');
-        }
-
-        function seleccionarProducto(producto) {
-            const input = document.getElementById('faltanteProducto');
-            const dropdown = document.getElementById('productoDropdown');
-            
-            input.value = producto.nombre;
-            dropdown.classList.remove('active');
-            
-            // Guardar datos del producto
-            document.getElementById('productoExistenteId').value = producto.id;
-            document.getElementById('productoExistenteProveedor').value = producto.proveedor || '';
-            document.getElementById('productoExistenteMedio').value = producto.medio || 'WhatsApp';
-            document.getElementById('productoExistenteContacto').value = producto.contacto || '';
-            
-            // Mostrar/ocultar campos de proveedor
-            if (!producto.proveedor) {
-                mostrarMensajeProductoNuevo(producto.nombre);
-            } else {
-                document.getElementById('camposProveedorNuevo').classList.add('hidden');
-                document.getElementById('mensajeProducto').classList.remove('hidden');
-                document.getElementById('mensajeProducto').style.background = '#e8f5e9';
-                document.getElementById('textoMensaje').innerHTML = `
-                    ✅ Producto encontrado<br>
-                    <small>Proveedor: ${producto.proveedor}</small>
-                `;
-            }
-        }
-
-        function mostrarMensajeProductoNuevo(valor) {
-            const mensajeDiv = document.getElementById('mensajeProducto');
-            mensajeDiv.classList.remove('hidden');
-            mensajeDiv.style.background = '#e3f2fd';
-            document.getElementById('textoMensaje').innerHTML = `
-                ✨ Producto nuevo<br>
-                <small>Completa los datos del proveedor</small>
-            `;
-            
-            document.getElementById('camposProveedorNuevo').classList.remove('hidden');
-            
-            // Resetear campos
-            document.getElementById('nuevoProveedorNombre').value = '';
-            document.getElementById('nuevoProveedorMedio').value = 'WhatsApp';
-            document.getElementById('nuevoProveedorContacto').value = '';
-        }
-
-        // ============================================================================
-        // AUTOCOMPLETADO DE PROVEEDORES OPTIMIZADO
-        // ============================================================================
-        function configurarAutocompletadoProveedores() {
-            const input = document.getElementById('nuevoProveedorNombre');
-            if (!input) return;
-            
-            let timeoutProveedor = null;
-            
-            input.addEventListener('input', function(e) {
-                const valor = e.target.value.trim();
-                const cacheKey = `proveedores_${valor.toLowerCase()}`;
-                
-                clearTimeout(timeoutProveedor);
-                timeoutProveedor = setTimeout(() => {
-                    // Verificar caché
-                    if (cacheAutocompletado.has(cacheKey) && 
-                        Date.now() - cacheAutocompletado.get(cacheKey).timestamp < 300000) {
-                        mostrarResultadosAutocompletadoProveedores(cacheAutocompletado.get(cacheKey).data);
-                        return;
-                    }
-                    
-                    if (!valor) {
-                        document.getElementById('proveedorDropdown').classList.remove('active');
-                        return;
-                    }
-                    
-                    // Buscar en proveedores ya cargados (máximo 10)
-                    const resultados = proveedores.filter(p => 
-                        p.nombre && p.nombre.toLowerCase().includes(valor.toLowerCase())
-                    ).slice(0, 10);
-                    
-                    cacheAutocompletado.set(cacheKey, {
-                        data: resultados,
-                        timestamp: Date.now()
+            db.collection('faltantes')
+                .where('fechaReporte', '>=', ultimos30Dias)
+                .orderBy('fechaReporte', 'desc')
+                .limit(100)
+                .onSnapshot((snapshot) => {
+                    faltantes = [];
+                    snapshot.forEach(doc => {
+                        faltantes.push({ id: doc.id, ...doc.data() });
                     });
-                    
-                    mostrarResultadosAutocompletadoProveedores(resultados);
-                }, 200);
-            });
+                    actualizarDashboard();
+                });
         }
 
-        function mostrarResultadosAutocompletadoProveedores(resultados) {
-            const dropdown = document.getElementById('proveedorDropdown');
-            if (!dropdown) return;
+        // ============================================================================
+        // DASHBOARD
+        // ============================================================================
+        function actualizarDashboard() {
+            // Actualizar estadísticas
+            const faltantesActivos = faltantes.filter(f => 
+                !f.fechaRecepcion && f.estadoFaltante !== 'Cerrado'
+            ).length;
             
-            dropdown.innerHTML = '';
+            const faltantesUrgentes = faltantes.filter(f => 
+                !f.fechaRecepcion && f.estadoStock === 'Sin Stock'
+            ).length;
             
-            if (resultados.length === 0) {
-                dropdown.classList.remove('active');
+            document.getElementById('statFaltantes').textContent = faltantesActivos;
+            document.getElementById('statUrgentes').textContent = faltantesUrgentes;
+            document.getElementById('statProductos').textContent = productos.length;
+            document.getElementById('statProveedores').textContent = proveedores.length;
+            
+            // Actualizar lista de faltantes recientes
+            actualizarListaFaltantesRecientes();
+        }
+
+        function actualizarListaFaltantesRecientes() {
+            const container = document.getElementById('recentFaltantesList');
+            if (!container) return;
+            
+            const faltantesRecientes = faltantes.slice(0, 5);
+            
+            if (faltantesRecientes.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 20px; color: #999;">
+                        No hay faltantes recientes
+                    </div>
+                `;
                 return;
             }
             
-            resultados.forEach(proveedor => {
-                const div = document.createElement('div');
-                div.className = 'autocomplete-item';
+            let html = '';
+            faltantesRecientes.forEach(faltante => {
+                const fecha = formatearFecha(faltante.fechaReporte);
                 
-                let html = proveedor.nombre;
-                if (proveedor.medio) {
-                    html += `<small style="color:#666; display:block; margin-top:2px;">Medio: ${proveedor.medio}</small>`;
-                }
-                if (proveedor.contacto) {
-                    const contacto = proveedor.contacto.length > 30 ? 
-                        proveedor.contacto.substring(0, 30) + '...' : proveedor.contacto;
-                    html += `<small style="color:#999; display:block;">Contacto: ${contacto}</small>`;
-                }
-                
-                div.innerHTML = html;
-                
-                div.addEventListener('click', () => {
-                    seleccionarProveedor(proveedor);
-                });
-                
-                dropdown.appendChild(div);
+                html += `
+                    <div class="list-item">
+                        <div class="list-item-content">
+                            <div class="list-item-title">${faltante.producto || 'Sin nombre'}</div>
+                            <div class="list-item-subtitle">
+                                ${faltante.proveedor || 'Sin proveedor'} • ${faltante.cantidad || 1} unid. • ${fecha}
+                            </div>
+                        </div>
+                        <span class="badge ${faltante.estadoStock === 'Sin Stock' ? 'badge-urgente' : 'badge-pendiente'}">
+                            ${faltante.estadoStock === 'Sin Stock' ? 'Urgente' : 'Pendiente'}
+                        </span>
+                    </div>
+                `;
             });
             
-            dropdown.classList.add('active');
-        }
-
-        function seleccionarProveedor(proveedor) {
-            const input = document.getElementById('nuevoProveedorNombre');
-            const dropdown = document.getElementById('proveedorDropdown');
-            
-            input.value = proveedor.nombre;
-            dropdown.classList.remove('active');
-            
-            if (proveedor.medio) {
-                document.getElementById('nuevoProveedorMedio').value = proveedor.medio;
-            }
-            
-            if (proveedor.contacto) {
-                document.getElementById('nuevoProveedorContacto').value = proveedor.contacto;
-            }
-        }
-
-        function actualizarDropdownProveedores() {
-            const select = document.getElementById('filtroProveedor');
-            if (!select) return;
-            
-            // Guardar valor seleccionado
-            const valorActual = select.value;
-            
-            // Limpiar opciones excepto la primera
-            select.innerHTML = '<option value="">Todos los proveedores</option>';
-            
-            // Obtener proveedores únicos
-            const proveedoresUnicos = [...new Set(productos.map(p => p.proveedor).filter(Boolean))];
-            
-            // Ordenar alfabéticamente
-            proveedoresUnicos.sort();
-            
-            // Agregar opciones
-            proveedoresUnicos.forEach(proveedor => {
-                const option = document.createElement('option');
-                option.value = proveedor;
-                option.textContent = proveedor;
-                if (proveedor === valorActual) option.selected = true;
-                select.appendChild(option);
-            });
+            container.innerHTML = html;
         }
 
         // ============================================================================
-        // PAGINACIÓN DE CATÁLOGO OPTIMIZADA
+        // GESTIÓN DE FALTANTES
         // ============================================================================
-        async function cargarProductosPaginados(pagina = 1) {
-            mostrarLoading(true, `Cargando productos (página ${pagina})...`);
+        function cargarDatosFaltantes() {
+            // Actualizar datalist de productos
+            const datalist = document.getElementById('productosList');
+            if (datalist) {
+                datalist.innerHTML = productos.map(p => 
+                    `<option value="${p.nombre || ''}">${p.proveedor ? `(${p.proveedor})` : ''}</option>`
+                ).join('');
+            }
+        }
+
+        async function guardarFaltante(event) {
+            event.preventDefault();
+            
+            if (!usuarioActual) {
+                mostrarToast('Debes iniciar sesión', 'error');
+                return;
+            }
+            
+            const producto = document.getElementById('productoInput').value.trim();
+            const proveedor = document.getElementById('proveedorSelect').value;
+            const cantidad = parseInt(document.getElementById('cantidadInput').value) || 1;
+            const estadoStock = document.getElementById('estadoStockSelect').value;
+            const notas = document.getElementById('notasInput').value.trim();
+            
+            if (!producto || !proveedor) {
+                mostrarToast('Completa los campos obligatorios', 'error');
+                return;
+            }
+            
+            mostrarLoading(true, 'Guardando faltante...');
+            
+            const faltanteData = {
+                producto: producto,
+                proveedor: proveedor,
+                cantidad: cantidad,
+                estadoStock: estadoStock,
+                estadoFaltante: 'Pendiente',
+                notas: notas || '',
+                fechaReporte: firebase.firestore.FieldValue.serverTimestamp(),
+                usuarioReporte: usuarioActual.email,
+                fechaRecepcion: null,
+                idPedido: null
+            };
             
             try {
-                const cacheKey = `productos_pagina_${pagina}`;
+                await db.collection('faltantes').add(faltanteData);
                 
-                // Verificar caché (válido por 10 minutos)
-                if (cacheProductos.has(cacheKey) && 
-                    Date.now() - cacheProductos.get(cacheKey).timestamp < 600000) {
-                    productos = cacheProductos.get(cacheKey).data;
-                    mostrarProductosPaginados();
-                    mostrarLoading(false);
-                    return;
-                }
+                // Limpiar formulario
+                document.getElementById('faltanteForm').reset();
+                document.getElementById('estadoStockSelect').value = 'Quedan Pocos';
                 
-                // Calcular offset
-                const offset = (pagina - 1) * productosPorPagina;
+                mostrarToast('Faltante reportado correctamente');
                 
-                // Contar total de productos (caché por día)
-                const countCacheKey = 'productos_count_' + new Date().toDateString();
-                if (!localStorage.getItem(countCacheKey)) {
-                    const countSnapshot = await db.collection('productos')
-                        .where('activo', '==', true)
-                        .count()
-                        .get();
-                    productosTotales = countSnapshot.data().count;
-                    localStorage.setItem(countCacheKey, productosTotales.toString());
-                } else {
-                    productosTotales = parseInt(localStorage.getItem(countCacheKey));
-                }
-                
-                // Consulta paginada con índice
-                const query = db.collection('productos')
-                    .where('activo', '==', true)
-                    .orderBy('fechaActualizacion', 'desc')
-                    .limit(productosPorPagina)
-                    .startAfter(offset > 0 ? await obtenerUltimoDocPagina(offset) : null);
-                
-                const snapshot = await query.get();
-                productos = [];
-                snapshot.forEach(doc => {
-                    productos.push({ id: doc.id, ...doc.data() });
-                });
-                
-                // Guardar en caché
-                cacheProductos.set(cacheKey, {
-                    data: productos,
-                    timestamp: Date.now()
-                });
-                
-                // Actualizar UI
-                mostrarProductosPaginados();
-                actualizarUIPaginacion(pagina);
+                // Regresar al dashboard
+                setTimeout(() => showSection('dashboard'), 1000);
                 
             } catch (error) {
-                console.error('Error en paginación:', error);
-                mostrarNotificacion('Error cargando productos', 'error');
+                console.error('Error guardando faltante:', error);
+                mostrarToast('Error al guardar el faltante', 'error');
             } finally {
                 mostrarLoading(false);
             }
         }
 
-        async function obtenerUltimoDocPagina(offset) {
-            // Obtener el último documento de la página anterior para paginación
-            const query = db.collection('productos')
-                .where('activo', '==', true)
-                .orderBy('fechaActualizacion', 'desc')
-                .limit(offset);
-            
-            const snapshot = await query.get();
-            if (snapshot.empty) return null;
-            
-            return snapshot.docs[snapshot.docs.length - 1];
+        // ============================================================================
+        // GESTIÓN DE PRODUCTOS
+        // ============================================================================
+        function cargarProductos() {
+            // Esta función es manejada por el listener en tiempo real
         }
 
-        function mostrarProductosPaginados() {
+        function actualizarListaProductosUI() {
             const container = document.getElementById('listaProductos');
             if (!container) return;
             
             if (productos.length === 0) {
                 container.innerHTML = `
-                    <div style="text-align: center; padding: 40px 20px; color: #7f8c8d;">
-                        <div style="font-size: 48px; margin-bottom: 10px;">📦</div>
-                        <h3 style="margin-bottom: 10px;">No hay productos</h3>
-                        <p>No se encontraron productos en el catálogo</p>
+                    <div style="text-align: center; padding: 30px; color: #999;">
+                        No hay productos registrados
                     </div>
                 `;
                 return;
             }
             
             let html = '';
-            productos.forEach(producto => {
-                const fecha = producto.fechaActualizacion ? formatearFecha(producto.fechaActualizacion) : '-';
-                
+            productos.slice(0, 20).forEach(producto => { // Límite para móvil
                 html += `
-                    <div class="faltante-item" style="margin-bottom: 10px;">
-                        <div class="faltante-header">
-                            <div class="faltante-producto">${producto.nombre || 'Sin nombre'}</div>
-                            <div class="faltante-badge ${producto.activo ? 'badge-pendiente' : 'badge-pedido'}">
-                                ${producto.activo ? '✅ Activo' : '❌ Inactivo'}
+                    <div class="list-item">
+                        <div class="list-item-content">
+                            <div class="list-item-title">${producto.nombre || 'Sin nombre'}</div>
+                            <div class="list-item-subtitle">
+                                ${producto.proveedor || 'Sin proveedor'}
+                                ${producto.codigo ? `• ${producto.codigo}` : ''}
                             </div>
                         </div>
-                        <div class="faltante-details">
-                            ${producto.codigo ? `<strong>Código:</strong> ${producto.codigo}<br>` : ''}
-                            ${producto.proveedor ? `<strong>Proveedor:</strong> ${producto.proveedor}<br>` : ''}
-                            ${producto.descripcion ? `<strong>Descripción:</strong> ${producto.descripcion.substring(0, 100)}${producto.descripcion.length > 100 ? '...' : ''}<br>` : ''}
-                            <strong>Última actualización:</strong> ${fecha}
-                        </div>
+                        <button onclick="editarProducto('${producto.id}')" 
+                                style="background:none; border:none; color:#667eea; font-size:18px;">
+                            ✏️
+                        </button>
                     </div>
                 `;
             });
             
             container.innerHTML = html;
+        }
+
+        function actualizarSelectsProductos() {
+            // Actualizar select en formulario de faltantes
+            const select = document.getElementById('proveedorSelect');
+            if (select) {
+                const valorActual = select.value;
+                select.innerHTML = '<option value="">Seleccionar proveedor...</option>';
+                
+                // Usar Set para proveedores únicos
+                const proveedoresUnicos = [...new Set(productos.map(p => p.proveedor).filter(p => p))];
+                
+                proveedoresUnicos.forEach(proveedor => {
+                    const option = document.createElement('option');
+                    option.value = proveedor;
+                    option.textContent = proveedor;
+                    select.appendChild(option);
+                });
+                
+                // Restaurar valor si existe
+                if (valorActual && Array.from(select.options).some(opt => opt.value === valorActual)) {
+                    select.value = valorActual;
+                }
+            }
+        }
+
+        function mostrarFormularioProducto(producto = null) {
+            const container = document.getElementById('productoFormContainer');
+            const form = document.getElementById('productoForm');
             
-            // Mostrar/ocultar botón "Cargar más" según dispositivo
-            const btnCargarMas = document.getElementById('btnCargarMas');
-            if (window.innerWidth < 768) {
-                btnCargarMas.style.display = 'block';
+            if (producto) {
+                // Modo edición
+                document.getElementById('nombreProducto').value = producto.nombre || '';
+                document.getElementById('proveedorProducto').value = producto.proveedor || '';
+                document.getElementById('codigoProducto').value = producto.codigo || '';
+                form.dataset.editId = producto.id;
             } else {
-                btnCargarMas.style.display = 'none';
-            }
-        }
-
-        function actualizarUIPaginacion(pagina) {
-            const totalPaginas = Math.ceil(productosTotales / productosPorPagina);
-            
-            document.getElementById('currentPage').textContent = pagina;
-            document.getElementById('totalPages').textContent = totalPaginas;
-            document.getElementById('showingCount').textContent = productos.length;
-            document.getElementById('totalCount').textContent = productosTotales;
-            
-            document.getElementById('btnPrev').disabled = pagina <= 1;
-            document.getElementById('btnNext').disabled = pagina >= totalPaginas;
-        }
-
-        function cambiarPagina(direccion) {
-            const nuevaPagina = paginaActual + direccion;
-            if (nuevaPagina < 1 || nuevaPagina > Math.ceil(productosTotales / productosPorPagina)) {
-                return;
+                // Modo nuevo
+                form.reset();
+                delete form.dataset.editId;
             }
             
-            paginaActual = nuevaPagina;
-            cargarProductosPaginados(paginaActual);
+            container.style.display = 'block';
+            container.scrollIntoView({ behavior: 'smooth' });
         }
 
-        function cargarMasProductos() {
-            cambiarPagina(1);
+        function ocultarFormularioProducto() {
+            document.getElementById('productoFormContainer').style.display = 'none';
         }
 
-        function filtrarCatalogo() {
-            const busqueda = document.getElementById('buscarProducto').value.toLowerCase();
-            const proveedor = document.getElementById('filtroProveedor').value;
-            
-            // Filtrar productos localmente (sin consultas adicionales)
-            const productosFiltrados = productos.filter(p => {
-                const coincideNombre = p.nombre && p.nombre.toLowerCase().includes(busqueda);
-                const coincideProveedor = !proveedor || p.proveedor === proveedor;
-                return coincideNombre && coincideProveedor;
-            });
-            
-            mostrarProductosFiltrados(productosFiltrados);
-        }
-
-        function mostrarProductosFiltrados(productosFiltrados) {
-            const container = document.getElementById('listaProductos');
-            if (!container) return;
-            
-            if (productosFiltrados.length === 0) {
-                container.innerHTML = `
-                    <div style="text-align: center; padding: 20px; color: #7f8c8d;">
-                        No se encontraron productos con esos filtros
-                    </div>
-                `;
-                return;
-            }
-            
-            let html = '';
-            productosFiltrados.slice(0, 50).forEach(producto => {
-                html += `
-                    <div class="faltante-item" style="margin-bottom: 10px;">
-                        <div class="faltante-header">
-                            <div class="faltante-producto">${producto.nombre}</div>
-                            <div class="faltante-badge ${producto.activo ? 'badge-pendiente' : 'badge-pedido'}">
-                                ${producto.activo ? '✅' : '❌'}
-                            </div>
-                        </div>
-                        <div class="faltante-details">
-                            ${producto.proveedor ? `<strong>Proveedor:</strong> ${producto.proveedor}<br>` : ''}
-                            ${producto.codigo ? `<strong>Código:</strong> ${producto.codigo}` : ''}
-                        </div>
-                    </div>
-                `;
-            });
-            
-            container.innerHTML = html;
-        }
-
-        // ============================================================================
-        // ANÁLISIS IA OPTIMIZADO
-        // ============================================================================
-        async function ejecutarAnalisisIA() {
-            mostrarLoading(true, 'Analizando datos...');
-            
-            try {
-                const cacheKey = 'analisis_ia_' + new Date().toISOString().split('T')[0];
-                
-                // Verificar caché (2 horas)
-                if (cacheAnalisis.has(cacheKey) && 
-                    Date.now() - cacheAnalisis.get(cacheKey).timestamp < 2 * 60 * 60 * 1000) {
-                    mostrarResultadosAnalisis(cacheAnalisis.get(cacheKey).data);
-                    mostrarLoading(false);
-                    return;
-                }
-                
-                // 1. Solo procesar faltantes activos
-                const faltantesActivos = faltantes.filter(f => f.activo !== false);
-                
-                // 2. Solo pedidos de los últimos 30 días (máximo 100)
-                const fechaLimite = new Date();
-                fechaLimite.setDate(fechaLimite.getDate() - 30);
-                
-                const snapshotPedidos = await db.collection('pedidos')
-                    .where('fechaPedido', '>=', fechaLimite)
-                    .limit(100)
-                    .get();
-                
-                const pedidosRecientes = [];
-                snapshotPedidos.forEach(doc => {
-                    pedidosRecientes.push(doc.data());
-                });
-                
-                // 3. Limitar análisis a 100 productos críticos máximo
-                const productosCriticos = faltantesActivos
-                    .filter(f => f.estadoStock === 'Sin Stock')
-                    .slice(0, 100);
-                
-                // 4. Análisis simplificado (sin llamadas externas)
-                const analisis = {
-                    fecha: new Date(),
-                    totalFaltantes: faltantesActivos.length,
-                    sinStock: productosCriticos.length,
-                    tendencias: analizarTendenciasLocales(productosCriticos, pedidosRecientes),
-                    recomendaciones: generarRecomendacionesLocales(productosCriticos),
-                    productosCriticos: productosCriticos.map(p => ({
-                        nombre: p.producto,
-                        proveedor: p.proveedor,
-                        diasPendiente: calcularDiasPendiente(p.fechaReporte)
-                    }))
-                };
-                
-                // Guardar en caché
-                cacheAnalisis.set(cacheKey, {
-                    data: analisis,
-                    timestamp: Date.now()
-                });
-                
-                mostrarResultadosAnalisis(analisis);
-                
-                // Registrar log
-                await db.collection('logs').add({
-                    fecha: firebase.firestore.FieldValue.serverTimestamp(),
-                    usuario: usuarioActual.email,
-                    accion: 'Análisis IA ejecutado',
-                    detalle: `Analizados ${productosCriticos.length} productos críticos`,
-                    sucursal: sucursalActual
-                });
-                
-            } catch (error) {
-                console.error('Error en análisis IA:', error);
-                // Fallback a análisis local
-                const analisisFallback = analisisLocalFallback();
-                mostrarResultadosAnalisis(analisisFallback);
-                mostrarNotificacion('Análisis completado (modo local)', 'success');
-            } finally {
-                mostrarLoading(false);
-            }
-        }
-
-        function analizarTendenciasLocales(productosCriticos, pedidosRecientes) {
-            // Análisis simple de tendencias
-            const tendencias = [];
-            
-            // Agrupar por proveedor
-            const porProveedor = {};
-            productosCriticos.forEach(p => {
-                if (!porProveedor[p.proveedor]) {
-                    porProveedor[p.proveedor] = 0;
-                }
-                porProveedor[p.proveedor]++;
-            });
-            
-            // Identificar proveedores con más faltantes
-            const proveedoresProblema = Object.entries(porProveedor)
-                .sort((a, b) => b[1] - a[1])
-                .slice(0, 3);
-            
-            proveedoresProblema.forEach(([proveedor, cantidad]) => {
-                tendencias.push(`${proveedor}: ${cantidad} faltantes`);
-            });
-            
-            // Verificar productos recurrentes en pedidos
-            const productosRecurrentes = {};
-            pedidosRecientes.forEach(pedido => {
-                if (pedido.productos) {
-                    pedido.productos.forEach(producto => {
-                        if (!productosRecurrentes[producto]) {
-                            productosRecurrentes[producto] = 0;
-                        }
-                        productosRecurrentes[producto]++;
-                    });
-                }
-            });
-            
-            const topRecurrentes = Object.entries(productosRecurrentes)
-                .sort((a, b) => b[1] - a[1])
-                .slice(0, 3);
-            
-            topRecurrentes.forEach(([producto, frecuencia]) => {
-                tendencias.push(`${producto}: pedido ${frecuencia} veces`);
-            });
-            
-            return tendencias;
-        }
-
-        function generarRecomendacionesLocales(productosCriticos) {
-            const recomendaciones = [];
-            
-            if (productosCriticos.length > 20) {
-                recomendaciones.push("⚠️ Alto nivel de faltantes. Considera realizar un pedido general");
-            }
-            
-            if (productosCriticos.length > 0) {
-                recomendaciones.push("📞 Contacta a los proveedores con más faltantes");
-                recomendaciones.push("📦 Prioriza productos sin stock para reposición inmediata");
-            }
-            
-            // Identificar productos con más de 7 días pendientes
-            const productosAntiguos = productosCriticos.filter(p => 
-                calcularDiasPendiente(p.fechaReporte) > 7
-            );
-            
-            if (productosAntiguos.length > 0) {
-                recomendaciones.push(`⏰ ${productosAntiguos.length} productos pendientes por más de 7 días`);
-            }
-            
-            return recomendaciones;
-        }
-
-        function calcularDiasPendiente(fechaReporte) {
-            if (!fechaReporte) return 0;
-            
-            const fecha = fechaReporte.toDate ? fechaReporte.toDate() : new Date(fechaReporte);
-            const hoy = new Date();
-            const diferencia = hoy.getTime() - fecha.getTime();
-            return Math.floor(diferencia / (1000 * 60 * 60 * 24));
-        }
-
-        function analisisLocalFallback() {
-            return {
-                fecha: new Date(),
-                totalFaltantes: faltantes.length,
-                sinStock: faltantes.filter(f => f.estadoStock === 'Sin Stock').length,
-                tendencias: ['Modo análisis local activado'],
-                recomendaciones: ['Verifica conexión para análisis completo'],
-                productosCriticos: []
-            };
-        }
-
-        function mostrarResultadosAnalisis(analisis) {
-            document.getElementById('productosCriticos').textContent = analisis.sinStock;
-            document.getElementById('ultimoAnalisis').textContent = formatearFecha(analisis.fecha);
-            
-            let htmlTendencias = '';
-            analisis.tendencias.forEach(t => {
-                htmlTendencias += `<div style="margin-bottom: 5px;">• ${t}</div>`;
-            });
-            document.getElementById('tendenciasAnalisis').innerHTML = htmlTendencias;
-            
-            mostrarNotificacion(`Análisis completado: ${analisis.sinStock} productos críticos`, 'success');
-        }
-
-        // ============================================================================
-        // GUARDAR FALTANTE OPTIMIZADO
-        // ============================================================================
-        async function guardarFaltante(event) {
+        async function guardarProducto(event) {
             event.preventDefault();
             
-            if (!usuarioActual) {
-                mostrarNotificacion('Debes iniciar sesión', 'error');
+            const form = document.getElementById('productoForm');
+            const nombre = document.getElementById('nombreProducto').value.trim();
+            const proveedor = document.getElementById('proveedorProducto').value;
+            const codigo = document.getElementById('codigoProducto').value.trim();
+            
+            if (!nombre || !proveedor) {
+                mostrarToast('Completa los campos obligatorios', 'error');
                 return;
             }
             
-            // Validaciones
-            const producto = document.getElementById('faltanteProducto').value.trim();
-            const cantidad = parseInt(document.getElementById('faltanteCantidad').value) || 1;
-            const estadoStock = document.getElementById('faltanteStock').value;
-            const sucursal = document.getElementById('faltanteSucursal').value;
+            mostrarLoading(true, 'Guardando producto...');
             
-            if (!producto || producto.length < 2) {
-                mostrarNotificacion('Nombre de producto inválido', 'error');
-                document.getElementById('faltanteProducto').focus();
-                return;
-            }
-            
-            // Verificar si ya existe faltante similar (mismo producto, misma sucursal, pendiente)
-            const existeFaltante = faltantes.some(f => 
-                f.producto === producto && 
-                f.sucursal === sucursal && 
-                f.estadoFaltante === 'Pendiente'
-            );
-            
-            if (existeFaltante) {
-                mostrarNotificacion('Ya existe un faltante pendiente para este producto', 'error');
-                return;
-            }
-            
-            // Obtener datos del proveedor
-            let proveedorNombre = document.getElementById('productoExistenteProveedor').value;
-            let proveedorMedio = document.getElementById('productoExistenteMedio').value;
-            let proveedorContacto = document.getElementById('productoExistenteContacto').value;
-            
-            // Si no hay proveedor del producto, usar los campos nuevos
-            if (!proveedorNombre || document.getElementById('camposProveedorNuevo').classList.contains('hidden') === false) {
-                proveedorNombre = document.getElementById('nuevoProveedorNombre').value.trim();
-                proveedorMedio = document.getElementById('nuevoProveedorMedio').value;
-                proveedorContacto = document.getElementById('nuevoProveedorContacto').value.trim();
-            }
-            
-            // Validar proveedor
-            if (!proveedorNombre) {
-                mostrarNotificacion('El proveedor es requerido', 'error');
-                document.getElementById('nuevoProveedorNombre').focus();
-                return;
-            }
-            
-            // Preparar datos
-            const faltanteData = {
-                producto: producto,
-                cantidad: cantidad,
-                estadoStock: estadoStock,
-                sucursal: sucursal,
-                proveedor: proveedorNombre,
-                medio: proveedorMedio,
-                contacto: proveedorContacto,
-                estadoFaltante: 'Pendiente',
+            const productoData = {
+                nombre: nombre,
+                proveedor: proveedor,
+                codigo: codigo || '',
                 activo: true,
-                fechaReporte: firebase.firestore.FieldValue.serverTimestamp(),
-                usuarioReporte: usuarioActual.email,
-                fechaPedido: null,
-                idPedido: null
+                fechaActualizacion: firebase.firestore.FieldValue.serverTimestamp()
             };
             
-            mostrarLoading(true, 'Guardando faltante...');
-            
             try {
-                // 1. Guardar faltante
-                await db.collection('faltantes').add(faltanteData);
-                
-                // 2. Si es producto nuevo, crearlo en catálogo
-                const productoId = document.getElementById('productoExistenteId').value;
-                if (!productoId) {
-                    const productoData = {
-                        nombre: producto,
-                        proveedor: proveedorNombre,
-                        medio: proveedorMedio,
-                        contacto: proveedorContacto,
-                        activo: true,
-                        fechaCreacion: firebase.firestore.FieldValue.serverTimestamp(),
-                        fechaActualizacion: firebase.firestore.FieldValue.serverTimestamp()
-                    };
-                    
+                if (form.dataset.editId) {
+                    // Actualizar
+                    await db.collection('productos').doc(form.dataset.editId).update(productoData);
+                    mostrarToast('Producto actualizado');
+                } else {
+                    // Crear nuevo
+                    productoData.fechaCreacion = firebase.firestore.FieldValue.serverTimestamp();
                     await db.collection('productos').add(productoData);
-                    
-                    // Limpiar caché de productos
-                    cacheProductos.clear();
-                    cacheAutocompletado.clear();
+                    mostrarToast('Producto creado');
                 }
                 
-                // 3. Crear proveedor si no existe
-                const proveedorExistente = proveedores.find(p => 
-                    p.nombre && p.nombre.toLowerCase() === proveedorNombre.toLowerCase()
-                );
-                
-                if (!proveedorExistente) {
-                    const proveedorData = {
-                        nombre: proveedorNombre,
-                        medio: proveedorMedio,
-                        contacto: proveedorContacto,
-                        activo: true,
-                        fechaCreacion: firebase.firestore.FieldValue.serverTimestamp()
-                    };
-                    
-                    await db.collection('proveedores').add(proveedorData);
-                }
-                
-                mostrarNotificacion('✅ Faltante reportado correctamente');
-                limpiarFormularioFaltante();
-                
-                // Registrar log optimizado (sin esperar)
-                db.collection('logs').add({
-                    fecha: firebase.firestore.FieldValue.serverTimestamp(),
-                    usuario: usuarioActual.email,
-                    accion: 'Reportar Faltante (Móvil)',
-                    detalle: `${producto} x${cantidad}`,
-                    sucursal: sucursal
-                }).catch(() => {}); // Ignorar errores en logs
+                ocultarFormularioProducto();
                 
             } catch (error) {
-                console.error('Error guardando faltante:', error);
-                mostrarNotificacion('Error al guardar faltante', 'error');
+                console.error('Error guardando producto:', error);
+                mostrarToast('Error al guardar', 'error');
             } finally {
                 mostrarLoading(false);
             }
         }
 
-        function limpiarFormularioFaltante() {
-            document.getElementById('faltanteForm').reset();
-            document.getElementById('faltanteCantidad').value = '1';
-            document.getElementById('faltanteStock').value = 'Quedan Pocos';
-            document.getElementById('faltanteSucursal').value = sucursalActual;
-            
-            // Limpiar campos ocultos
-            document.getElementById('productoExistenteId').value = '';
-            document.getElementById('productoExistenteProveedor').value = '';
-            document.getElementById('productoExistenteMedio').value = '';
-            document.getElementById('productoExistenteContacto').value = '';
-            
-            // Ocultar campos adicionales
-            document.getElementById('mensajeProducto').classList.add('hidden');
-            document.getElementById('camposProveedorNuevo').classList.add('hidden');
-            
-            // Resetear campos de proveedor
-            document.getElementById('nuevoProveedorNombre').value = '';
-            document.getElementById('nuevoProveedorMedio').value = 'WhatsApp';
-            document.getElementById('nuevoProveedorContacto').value = '';
-            
-            // Enfocar campo de producto
-            setTimeout(() => {
-                document.getElementById('faltanteProducto').focus();
-            }, 100);
+        function editarProducto(productoId) {
+            const producto = productos.find(p => p.id === productoId);
+            if (producto) {
+                mostrarFormularioProducto(producto);
+            }
         }
 
         // ============================================================================
-        // LISTA DE FALTANTES CON PAGINACIÓN
+        // GESTIÓN DE PROVEEDORES
         // ============================================================================
-        let paginaFaltantesActual = 1;
-        const faltantesPorPagina = 20;
+        function cargarProveedores() {
+            // Esta función es manejada por el listener en tiempo real
+        }
 
-        function actualizarListaFaltantes() {
-            const container = document.getElementById('listaFaltantes');
+        function actualizarListaProveedoresUI() {
+            const container = document.getElementById('listaProveedores');
             if (!container) return;
             
-            // Filtrar faltantes pendientes
-            const faltantesPendientes = faltantes.filter(f => 
-                f.estadoFaltante === 'Pendiente' && f.producto
-            );
-            
-            if (faltantesPendientes.length === 0) {
+            if (proveedores.length === 0) {
                 container.innerHTML = `
-                    <div style="text-align: center; padding: 40px 20px; color: #7f8c8d;">
-                        <div style="font-size: 48px; margin-bottom: 10px;">✅</div>
-                        <h3 style="margin-bottom: 10px;">No hay faltantes pendientes</h3>
-                        <p>¡Todo está bajo control!</p>
+                    <div style="text-align: center; padding: 30px; color: #999;">
+                        No hay proveedores registrados
                     </div>
                 `;
-                document.getElementById('paginacionFaltantes').classList.add('hidden');
                 return;
             }
             
-            // Calcular paginación
-            const totalPaginas = Math.ceil(faltantesPendientes.length / faltantesPorPagina);
-            const inicio = (paginaFaltantesActual - 1) * faltantesPorPagina;
-            const fin = inicio + faltantesPorPagina;
-            const faltantesPagina = faltantesPendientes.slice(inicio, fin);
-            
-            // Mostrar faltantes
             let html = '';
-            faltantesPagina.forEach(faltante => {
-                const esSinStock = faltante.estadoStock === 'Sin Stock';
-                const fecha = formatearFecha(faltante.fechaReporte);
-                const proveedor = faltante.proveedor || 'Sin proveedor';
-                const medio = faltante.medio || 'WhatsApp';
-                const contacto = faltante.contacto || 'Sin contacto';
-                
+            proveedores.slice(0, 20).forEach(proveedor => { // Límite para móvil
                 html += `
-                    <div class="faltante-item ${esSinStock ? 'sin-stock' : ''}">
-                        <div class="faltante-header">
-                            <div class="faltante-producto">${faltante.producto}</div>
-                            <div class="faltante-badge ${esSinStock ? 'badge-pedido' : 'badge-pendiente'}">
-                                ${esSinStock ? '🔴 Sin Stock' : '🟡 Pocos'}
+                    <div class="list-item">
+                        <div class="list-item-content">
+                            <div class="list-item-title">${proveedor.nombre || 'Sin nombre'}</div>
+                            <div class="list-item-subtitle">
+                                ${proveedor.contacto || 'Sin contacto'}
+                                ${proveedor.medio ? `• ${proveedor.medio}` : ''}
                             </div>
                         </div>
-                        <div class="faltante-details">
-                            <strong>Cantidad:</strong> ${faltante.cantidad || 1}<br>
-                            <strong>Proveedor:</strong> ${proveedor}<br>
-                            <strong>Medio:</strong> ${medio}<br>
-                            <strong>Contacto:</strong> ${contacto.length > 30 ? contacto.substring(0, 30) + '...' : contacto}<br>
-                            <strong>Reportado:</strong> ${fecha}
-                        </div>
+                        <button onclick="editarProveedor('${proveedor.id}')" 
+                                style="background:none; border:none; color:#667eea; font-size:18px;">
+                            ✏️
+                        </button>
                     </div>
                 `;
             });
             
             container.innerHTML = html;
-            
-            // Actualizar paginación
-            actualizarPaginacionFaltantes(totalPaginas);
         }
 
-        function actualizarPaginacionFaltantes(totalPaginas) {
-            const paginacion = document.getElementById('paginacionFaltantes');
-            const btnAnterior = document.getElementById('btnAnterior');
-            const btnSiguiente = document.getElementById('btnSiguiente');
-            const paginaActualElem = document.getElementById('paginaActual');
-            const totalPaginasElem = document.getElementById('totalPaginas');
-            
-            if (totalPaginas > 1) {
-                paginacion.classList.remove('hidden');
-                paginaActualElem.textContent = paginaFaltantesActual;
-                totalPaginasElem.textContent = totalPaginas;
-                btnAnterior.disabled = paginaFaltantesActual <= 1;
-                btnSiguiente.disabled = paginaFaltantesActual >= totalPaginas;
-            } else {
-                paginacion.classList.add('hidden');
-            }
-        }
-
-        function cambiarPaginaFaltantes(direccion) {
-            const faltantesPendientes = faltantes.filter(f => f.estadoFaltante === 'Pendiente');
-            const totalPaginas = Math.ceil(faltantesPendientes.length / faltantesPorPagina);
-            
-            const nuevaPagina = paginaFaltantesActual + direccion;
-            if (nuevaPagina < 1 || nuevaPagina > totalPaginas) {
-                return;
-            }
-            
-            paginaFaltantesActual = nuevaPagina;
-            actualizarListaFaltantes();
-            
-            // Scroll al inicio de la lista
-            document.getElementById('listaFaltantes').scrollIntoView({ behavior: 'smooth' });
-        }
-
-        function filtrarFaltantes(filtro) {
-            paginaFaltantesActual = 1; // Resetear a primera página
-            
-            const container = document.getElementById('listaFaltantes');
-            if (!container) return;
-            
-            let filtrados = faltantes.filter(f => f.estadoFaltante === 'Pendiente' && f.producto);
-            
-            if (filtro === 'sin-stock') {
-                filtrados = filtrados.filter(f => f.estadoStock === 'Sin Stock');
-            }
-            
-            if (filtrados.length === 0) {
-                container.innerHTML = `
-                    <div style="text-align: center; padding: 40px 20px; color: #7f8c8d;">
-                        <div style="font-size: 48px; margin-bottom: 10px;">🔍</div>
-                        <h3 style="margin-bottom: 10px;">No hay resultados</h3>
-                        <p>No se encontraron faltantes con ese filtro</p>
-                    </div>
-                `;
-                document.getElementById('paginacionFaltantes').classList.add('hidden');
-                return;
-            }
-            
-            // Aplicar paginación
-            const totalPaginas = Math.ceil(filtrados.length / faltantesPorPagina);
-            const inicio = (paginaFaltantesActual - 1) * faltantesPorPagina;
-            const fin = inicio + faltantesPorPagina;
-            const faltantesPagina = filtrados.slice(inicio, fin);
-            
-            let html = '';
-            faltantesPagina.forEach(faltante => {
-                const esSinStock = faltante.estadoStock === 'Sin Stock';
-                const fecha = formatearFecha(faltante.fechaReporte);
-                const proveedor = faltante.proveedor || 'Sin proveedor';
+        function actualizarSelectsProveedores() {
+            // Actualizar select en formulario de producto
+            const select = document.getElementById('proveedorProducto');
+            if (select) {
+                const valorActual = select.value;
+                select.innerHTML = '<option value="">Seleccionar proveedor...</option>';
                 
-                html += `
-                    <div class="faltante-item ${esSinStock ? 'sin-stock' : ''}">
-                        <div class="faltante-header">
-                            <div class="faltante-producto">${faltante.producto}</div>
-                            <div class="faltante-badge ${esSinStock ? 'badge-pedido' : 'badge-pendiente'}">
-                                ${esSinStock ? '🔴 Sin Stock' : '🟡 Pocos'}
-                            </div>
-                        </div>
-                        <div class="faltante-details">
-                            <strong>Cantidad:</strong> ${faltante.cantidad || 1}<br>
-                            <strong>Proveedor:</strong> ${proveedor}<br>
-                            <strong>Reportado:</strong> ${fecha}
-                        </div>
-                    </div>
-                `;
-            });
-            
-            container.innerHTML = html;
-            actualizarPaginacionFaltantes(totalPaginas);
-        }
-
-        // ============================================================================
-        // DASHBOARD OPTIMIZADO
-        // ============================================================================
-        async function actualizarDashboard() {
-            try {
-                // Usar datos ya cargados en los listeners
-                const faltantesPendientes = faltantes.filter(f => 
-                    f.estadoFaltante === 'Pendiente'
-                ).length;
-                
-                const faltantesSinStock = faltantes.filter(f => 
-                    f.estadoFaltante === 'Pendiente' && f.estadoStock === 'Sin Stock'
-                ).length;
-                
-                // Para pedidos, usar caché o datos recientes
-                const hoy = new Date();
-                hoy.setHours(0, 0, 0, 0);
-                
-                // Intentar obtener datos de pedidos del cache
-                const cacheKey = 'pedidos_hoy_' + hoy.toDateString();
-                let pedidosHoy = 0;
-                let pedidosRecibidos = 0;
-                
-                if (localStorage.getItem(cacheKey)) {
-                    const cacheData = JSON.parse(localStorage.getItem(cacheKey));
-                    if (Date.now() - cacheData.timestamp < 3600000) { // 1 hora
-                        pedidosHoy = cacheData.pedidosHoy || 0;
-                        pedidosRecibidos = cacheData.pedidosRecibidos || 0;
+                proveedores.forEach(proveedor => {
+                    if (proveedor.nombre) {
+                        const option = document.createElement('option');
+                        option.value = proveedor.nombre;
+                        option.textContent = proveedor.nombre;
+                        select.appendChild(option);
                     }
+                });
+                
+                // Restaurar valor si existe
+                if (valorActual && Array.from(select.options).some(opt => opt.value === valorActual)) {
+                    select.value = valorActual;
+                }
+            }
+        }
+
+        function mostrarFormularioProveedor(proveedor = null) {
+            const container = document.getElementById('proveedorFormContainer');
+            const form = document.getElementById('proveedorForm');
+            
+            if (proveedor) {
+                // Modo edición
+                document.getElementById('nombreProveedor').value = proveedor.nombre || '';
+                document.getElementById('contactoProveedor').value = proveedor.contacto || '';
+                document.getElementById('medioProveedor').value = proveedor.medio || 'WhatsApp';
+                form.dataset.editId = proveedor.id;
+            } else {
+                // Modo nuevo
+                form.reset();
+                document.getElementById('medioProveedor').value = 'WhatsApp';
+                delete form.dataset.editId;
+            }
+            
+            container.style.display = 'block';
+            container.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function ocultarFormularioProveedor() {
+            document.getElementById('proveedorFormContainer').style.display = 'none';
+        }
+
+        async function guardarProveedor(event) {
+            event.preventDefault();
+            
+            const form = document.getElementById('proveedorForm');
+            const nombre = document.getElementById('nombreProveedor').value.trim();
+            const contacto = document.getElementById('contactoProveedor').value.trim();
+            const medio = document.getElementById('medioProveedor').value;
+            
+            if (!nombre || !contacto) {
+                mostrarToast('Completa los campos obligatorios', 'error');
+                return;
+            }
+            
+            mostrarLoading(true, 'Guardando proveedor...');
+            
+            const proveedorData = {
+                nombre: nombre,
+                contacto: contacto,
+                medio: medio,
+                activo: true,
+                fechaActualizacion: firebase.firestore.FieldValue.serverTimestamp()
+            };
+            
+            try {
+                if (form.dataset.editId) {
+                    // Actualizar
+                    await db.collection('proveedores').doc(form.dataset.editId).update(proveedorData);
+                    mostrarToast('Proveedor actualizado');
+                } else {
+                    // Crear nuevo
+                    proveedorData.fechaCreacion = firebase.firestore.FieldValue.serverTimestamp();
+                    await db.collection('proveedores').add(proveedorData);
+                    mostrarToast('Proveedor creado');
                 }
                 
-                // Si no hay caché válido, hacer consulta limitada
-                if (pedidosHoy === 0) {
-                    const snapshotPedidos = await db.collection('pedidos')
-                        .where('fechaPedido', '>=', hoy)
-                        .limit(50)
-                        .get();
-                    
-                    pedidosHoy = snapshotPedidos.size;
-                    
-                    // Contar recibidos últimos 7 días
-                    const hace7Dias = new Date();
-                    hace7Dias.setDate(hace7Dias.getDate() - 7);
-                    
-                    const snapshotRecibidos = await db.collection('pedidos')
-                        .where('estado', '==', 'Recibido')
-                        .where('fechaRecepcion', '>=', hace7Dias)
-                        .limit(100)
-                        .get();
-                    
-                    pedidosRecibidos = snapshotRecibidos.size;
-                    
-                    // Guardar en caché
-                    localStorage.setItem(cacheKey, JSON.stringify({
-                        pedidosHoy: pedidosHoy,
-                        pedidosRecibidos: pedidosRecibidos,
-                        timestamp: Date.now()
-                    }));
-                }
-                
-                // Actualizar UI
-                document.getElementById('statPendientes').textContent = faltantesPendientes;
-                document.getElementById('statSinStock').textContent = faltantesSinStock;
-                document.getElementById('statPedidosHoy').textContent = pedidosHoy;
-                document.getElementById('statRecibidos').textContent = pedidosRecibidos;
+                ocultarFormularioProveedor();
                 
             } catch (error) {
-                console.error('Error actualizando dashboard:', error);
-                // Fallback: usar datos básicos
-                const faltantesPendientes = faltantes.filter(f => f.estadoFaltante === 'Pendiente').length;
-                document.getElementById('statPendientes').textContent = faltantesPendientes;
-                document.getElementById('statSinStock').textContent = faltantes.filter(f => 
-                    f.estadoFaltante === 'Pendiente' && f.estadoStock === 'Sin Stock'
-                ).length;
+                console.error('Error guardando proveedor:', error);
+                mostrarToast('Error al guardar', 'error');
+            } finally {
+                mostrarLoading(false);
+            }
+        }
+
+        function editarProveedor(proveedorId) {
+            const proveedor = proveedores.find(p => p.id === proveedorId);
+            if (proveedor) {
+                mostrarFormularioProveedor(proveedor);
             }
         }
 
         // ============================================================================
-        // NAVEGACIÓN
+        // MANEJO OFFLINE Y CACHE [citation:7]
         // ============================================================================
-        function navegarA(pagina) {
-            // Actualizar título
-            const titulos = {
-                'dashboard': '🏗️ Inicio',
-                'faltante': '⚠️ Reportar Faltante',
-                'lista': '📋 Faltantes Pendientes',
-                'catalogo': '📦 Catálogo de Productos',
-                'perfil': '👤 Mi Perfil'
-            };
-            document.getElementById('pageTitle').textContent = titulos[pagina] || '🏗️ Ferretería';
-            
-            // Ocultar todas las páginas
-            document.querySelectorAll('.page').forEach(page => {
-                page.classList.remove('active');
-            });
-            
-            // Mostrar página seleccionada
-            document.getElementById(`page-${pagina}`).classList.add('active');
-            
-            // Actualizar navegación
-            document.querySelectorAll('.nav-item').forEach(item => {
-                item.classList.remove('active');
-            });
-            
-            const navItems = document.querySelectorAll('.nav-item');
-            const index = ['dashboard', 'faltante', 'lista', 'catalogo', 'perfil'].indexOf(pagina);
-            if (index !== -1 && navItems[index]) {
-                navItems[index].classList.add('active');
+        function configurarPersistenciaOffline() {
+            if ('serviceWorker' in navigator) {
+                window.addEventListener('load', () => {
+                    navigator.serviceWorker.register('/sw.js').catch(err => {
+                        console.log('ServiceWorker no registrado:', err);
+                    });
+                });
             }
             
-            // Configuraciones específicas por página
-            if (pagina === 'faltante') {
-                setTimeout(() => {
-                    configurarAutocompletadoProductos();
-                    configurarAutocompletadoProveedores();
-                    document.getElementById('faltanteProducto').focus();
-                }, 100);
-            } else if (pagina === 'catalogo') {
-                setTimeout(() => {
-                    mostrarProductosPaginados();
-                }, 100);
-            } else if (pagina === 'lista') {
-                actualizarListaFaltantes();
-            }
-            
-            // Scroll al inicio
-            window.scrollTo(0, 0);
-        }
-
-        function actualizarDatos() {
-            mostrarNotificacion('Actualizando datos...');
-            
-            // Limpiar cachés
-            cacheProductos.clear();
-            cacheAutocompletado.clear();
-            cacheAnalisis.clear();
-            localStorage.removeItem('sucursalMobile');
-            
-            // Recargar datos
-            cargarDatosIniciales();
-            actualizarDashboard();
-            
-            setTimeout(() => {
-                mostrarNotificacion('Datos actualizados correctamente ✅');
-            }, 1000);
-        }
-
-        // ============================================================================
-        // INICIALIZACIÓN
-        // ============================================================================
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('App móvil optimizada cargada');
-            
-            // Configurar autocompletado inicial
-            configurarAutocompletadoProductos();
-            configurarAutocompletadoProveedores();
-            
-            // Detectar tecla Enter en login
-            document.getElementById('loginPassword').addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    document.getElementById('loginForm').dispatchEvent(new Event('submit'));
-                }
-            });
-            
-            // Verificar conexión
+            // Detectar conexión
             window.addEventListener('online', () => {
-                mostrarNotificacion('Conectado a internet', 'success', 2000);
+                mostrarToast('Conexión restablecida', 'success');
             });
             
             window.addEventListener('offline', () => {
-                mostrarNotificacion('Modo sin conexión activado', 'error', 3000);
+                mostrarToast('Modo offline - Los cambios se sincronizarán después', 'error');
+            });
+        }
+
+        // ============================================================================
+        // INICIALIZACIÓN AL CARGAR
+        // ============================================================================
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('App cargada - Optimizada para móvil');
+            
+            // Configurar persistencia offline
+            configurarPersistenciaOffline();
+            
+            // Hacer que los botones sean más responsivos en móvil
+            document.querySelectorAll('button').forEach(btn => {
+                btn.addEventListener('touchstart', function() {
+                    this.style.opacity = '0.7';
+                });
+                btn.addEventListener('touchend', function() {
+                    this.style.opacity = '1';
+                });
             });
             
-            // Mostrar mensaje de optimización
-            console.log('✅ Sistema optimizado activado:');
-            console.log('- Autocompletado con caché y debounce');
-            console.log('- Listeners limitados (1,000 productos, 500 faltantes)');
-            console.log('- Paginación de catálogo (50 productos por página)');
-            console.log('- Análisis IA con caché de 2 horas');
-            console.log('- Lecturas reducidas en 99.75%');
+            // Evitar zoom en inputs en iOS
+            document.querySelectorAll('input, select, textarea').forEach(el => {
+                el.addEventListener('focus', () => {
+                    setTimeout(() => {
+                        document.body.style.transform = 'scale(1)';
+                    }, 100);
+                });
+            });
         });
+
+        // ============================================================================
+        // EXPORTAR FUNCIONES AL ÁMBITO GLOBAL
+        // ============================================================================
+        window.showSection = showSection;
+        window.login = login;
+        window.logout = logout;
+        window.guardarFaltante = guardarFaltante;
+        window.mostrarFormularioProducto = mostrarFormularioProducto;
+        window.ocultarFormularioProducto = ocultarFormularioProducto;
+        window.guardarProducto = guardarProducto;
+        window.editarProducto = editarProducto;
+        window.mostrarFormularioProveedor = mostrarFormularioProveedor;
+        window.ocultarFormularioProveedor = ocultarFormularioProveedor;
+        window.guardarProveedor = guardarProveedor;
+        window.editarProveedor = editarProveedor;
     </script>
 </body>
 </html>
