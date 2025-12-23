@@ -2650,11 +2650,6 @@
                 recomendaciones.push(`🚨 ${productosCriticosCount} productos en estado CRÍTICO. Revisión urgente del inventario.`);
             }
             
-            // Recomendaciones generales
-            recomendaciones.push('📊 Revisar stock de productos críticos cada 48 horas');
-            recomendaciones.push('🔄 Establecer cantidades mínimas para productos de alta rotación');
-            recomendaciones.push('📋 Coordinar pedidos por proveedor para mejores precios');
-            recomendaciones.push('🏷️ Etiquetar productos por categoría para mejor organización');
             
             // Análisis de categorías con problemas
             const categoriasCriticas = tendencias.filter(t => t.tendencia === 'AUMENTO' || t.tendencia === 'LEVE AUMENTO');
