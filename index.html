@@ -1,0 +1,2431 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Ferretería Carnevale - App Empleados</title>
+    
+    <!-- PWA Configuration -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#667eea">
+    <link rel="manifest" href="./manifest.json">
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+    
+    <style>
+        /* ===== ESTILOS MOBILE-FIRST ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+            line-height: 1.4;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* Pantalla de Instalación */
+        .install-prompt {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            z-index: 1000;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.2);
+            display: none;
+        }
+
+        .install-prompt.show {
+            display: block;
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+
+        .install-content {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .install-icon {
+            font-size: 24px;
+            background: rgba(255,255,255,0.2);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .install-text {
+            flex: 1;
+        }
+
+        .install-text h4 {
+            font-size: 16px;
+            margin-bottom: 3px;
+        }
+
+        .install-text p {
+            font-size: 12px;
+            opacity: 0.9;
+        }
+
+        .install-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-install {
+            background: white;
+            color: #667eea;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .btn-install-cancel {
+            background: transparent;
+            color: white;
+            border: 1px solid rgba(255,255,255,0.3);
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        /* Login Screen */
+        .login-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            z-index: 1001;
+        }
+
+        .login-container {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+
+        .app-logo {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .app-logo h1 {
+            font-size: 24px;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+
+        .app-logo p {
+            font-size: 14px;
+            color: #7f8c8d;
+        }
+
+        .login-tabs {
+            display: flex;
+            background: #f8f9fa;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 25px;
+        }
+
+        .login-tab {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            background: none;
+            font-size: 15px;
+            font-weight: 500;
+            color: #495057;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .login-tab.active {
+            background: #3498db;
+            color: white;
+        }
+
+        .login-form {
+            display: block;
+        }
+
+        .login-form.hidden {
+            display: none;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #495057;
+            font-size: 14px;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border 0.3s;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: #3498db;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #2980b9;
+        }
+
+        .btn-success {
+            background: #2ecc71;
+            color: white;
+        }
+
+        .app-info {
+            text-align: center;
+            margin-top: 20px;
+            color: white;
+            font-size: 12px;
+            opacity: 0.8;
+        }
+
+        /* App Container */
+        .app-container {
+            display: none;
+            min-height: 100vh;
+            padding-bottom: 70px;
+        }
+
+        /* Header Móvil */
+        .mobile-header {
+            background: linear-gradient(135deg, #2c3e50 0%, #4a6491 100%);
+            color: white;
+            padding: 15px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .header-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .user-details {
+            flex: 1;
+        }
+
+        .user-name {
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .user-email {
+            font-size: 11px;
+            opacity: 0.8;
+        }
+
+        .btn-logout {
+            background: rgba(231, 76, 60, 0.3);
+            border: none;
+            color: white;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            cursor: pointer;
+        }
+
+        .sucursal-selector {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(255,255,255,0.1);
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+        }
+
+        .sucursal-name {
+            font-weight: 600;
+        }
+
+        .btn-change-sucursal {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 14px;
+            cursor: pointer;
+            padding: 5px;
+        }
+
+        /* Navegación Móvil */
+        .mobile-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 0;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+            z-index: 100;
+        }
+
+        .nav-button {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            background: none;
+            color: #7f8c8d;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .nav-button.active {
+            color: #3498db;
+        }
+
+        .nav-icon {
+            font-size: 20px;
+        }
+
+        /* Contenido Principal */
+        .main-content {
+            padding: 15px;
+        }
+
+        /* Tarjeta de Estadísticas */
+        .stats-card {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .stats-title {
+            font-size: 14px;
+            color: #7f8c8d;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .stats-number {
+            font-size: 28px;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+
+        .stats-subtext {
+            font-size: 12px;
+            color: #95a5a6;
+        }
+
+        /* Formulario de Faltante */
+        .form-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .form-card h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .autocomplete-container {
+            position: relative;
+        }
+
+        .autocomplete-list {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 10;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            display: none;
+        }
+
+        .autocomplete-list.active {
+            display: block;
+        }
+
+        .autocomplete-item {
+            padding: 12px 15px;
+            border-bottom: 1px solid #f0f0f0;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .autocomplete-item:hover {
+            background: #f8f9fa;
+        }
+
+        .autocomplete-item strong {
+            display: block;
+            margin-bottom: 3px;
+        }
+
+        .autocomplete-item small {
+            color: #666;
+            font-size: 12px;
+        }
+
+        .form-grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .field-info {
+            font-size: 12px;
+            color: #7f8c8d;
+            margin-top: 5px;
+            display: block;
+        }
+
+        .producto-nuevo-info {
+            background: #e8f5e9;
+            border-left: 4px solid #4caf50;
+            padding: 12px;
+            margin-top: 10px;
+            border-radius: 6px;
+            font-size: 13px;
+        }
+
+        .proveedor-info {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 12px;
+            margin-top: 10px;
+            border-radius: 6px;
+            font-size: 13px;
+        }
+
+        /* Lista de Faltantes Pendientes */
+        .faltantes-list {
+            margin-top: 20px;
+        }
+
+        .faltante-item {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+            border-left: 4px solid #3498db;
+            transition: transform 0.2s;
+        }
+
+        .faltante-item:hover {
+            transform: translateY(-2px);
+        }
+
+        .faltante-item.sin-stock {
+            border-left-color: #e74c3c;
+            background: #ffeaea;
+        }
+
+        .faltante-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 8px;
+        }
+
+        .faltante-producto {
+            font-weight: 600;
+            font-size: 16px;
+            color: #2c3e50;
+        }
+
+        .faltante-fecha {
+            font-size: 12px;
+            color: #95a5a6;
+        }
+
+        .faltante-detalle {
+            font-size: 14px;
+            color: #555;
+            margin-bottom: 8px;
+        }
+
+        .faltante-sucursal {
+            display: inline-block;
+            padding: 4px 8px;
+            background: #e3f2fd;
+            color: #1976d2;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .faltante-estado {
+            display: inline-block;
+            padding: 4px 8px;
+            background: #fff3cd;
+            color: #856404;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+            margin-left: 5px;
+        }
+
+        /* Configuración */
+        .config-section {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .config-section h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        /* Notificaciones */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            left: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 500;
+            z-index: 1002;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            animation: slideInRight 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .notification.success {
+            background: #2ecc71;
+            border-left: 4px solid #27ae60;
+        }
+
+        .notification.error {
+            background: #e74c3c;
+            border-left: 4px solid #c0392b;
+        }
+
+        .notification.warning {
+            background: #f39c12;
+            border-left: 4px solid #d68910;
+        }
+
+        /* Loading Overlay */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255,255,255,0.95);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1003;
+            flex-direction: column;
+        }
+
+        .loading-overlay.active {
+            display: flex;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            margin-top: 15px;
+            color: #3498db;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        /* Skeleton Loading */
+        .skeleton {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
+            border-radius: 4px;
+        }
+
+        @keyframes loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        .skeleton-text {
+            height: 12px;
+            margin-bottom: 8px;
+        }
+
+        .skeleton-text:last-child {
+            width: 60%;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #95a5a6;
+        }
+
+        .empty-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+
+        .empty-state h4 {
+            font-size: 16px;
+            margin-bottom: 8px;
+            color: #7f8c8d;
+        }
+
+        .empty-state p {
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+
+        /* Offline Indicator */
+        .offline-indicator {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: #f39c12;
+            color: white;
+            text-align: center;
+            padding: 8px;
+            font-size: 12px;
+            font-weight: 500;
+            z-index: 999;
+            display: none;
+        }
+
+        .offline-indicator.active {
+            display: block;
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+            from { transform: translateY(-100%); }
+            to { transform: translateY(0); }
+        }
+
+        /* Modal de Cambio de Sucursal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1002;
+            padding: 20px;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-container {
+            background: white;
+            border-radius: 15px;
+            width: 100%;
+            max-width: 400px;
+            max-height: 80vh;
+            overflow-y: auto;
+            animation: modalIn 0.3s ease;
+        }
+
+        @keyframes modalIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, #2c3e50 0%, #4a6491 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 15px 15px 0 0;
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            font-size: 18px;
+        }
+
+        .modal-body {
+            padding: 20px;
+        }
+
+        .sucursal-option {
+            padding: 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .sucursal-option:hover {
+            border-color: #3498db;
+            background: #e3f2fd;
+        }
+
+        .sucursal-option.active {
+            border-color: #3498db;
+            background: #e3f2fd;
+        }
+
+        .sucursal-name {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .sucursal-description {
+            font-size: 12px;
+            color: #7f8c8d;
+        }
+
+        .modal-actions {
+            padding: 20px;
+            display: flex;
+            gap: 10px;
+            border-top: 1px solid #e9ecef;
+        }
+
+        .modal-actions .btn {
+            flex: 1;
+        }
+
+        /* Instrucciones de Uso */
+        .instructions-card {
+            background: #fff8e1;
+            border: 1px solid #ffecb3;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .instructions-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 10px;
+            color: #856404;
+        }
+
+        .instructions-list {
+            padding-left: 20px;
+            font-size: 13px;
+            color: #856404;
+        }
+
+        .instructions-list li {
+            margin-bottom: 5px;
+        }
+
+        /* Responsive */
+        @media (max-width: 480px) {
+            .login-container {
+                padding: 20px;
+            }
+            
+            .main-content {
+                padding: 12px;
+            }
+            
+            .form-grid-2 {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+            
+            .notification {
+                right: 12px;
+                left: 12px;
+            }
+        }
+
+        /* Ajustes para dispositivos muy pequeños */
+        @media (max-height: 600px) {
+            .login-container {
+                padding: 15px;
+            }
+            
+            .app-logo {
+                margin-bottom: 15px;
+            }
+            
+            .form-group {
+                margin-bottom: 15px;
+            }
+        }
+
+        /* Mejoras de accesibilidad */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+    </style>
+</head>
+<body>
+    <!-- Indicador de Sin Conexión -->
+    <div class="offline-indicator" id="offlineIndicator">
+        ⚠️ Sin conexión - Modo offline activado
+    </div>
+
+    <!-- Pantalla de Instalación PWA -->
+    <div class="install-prompt" id="installPrompt">
+        <div class="install-content">
+            <div class="install-icon">📱</div>
+            <div class="install-text">
+                <h4>Instalar App</h4>
+                <p>Instala esta aplicación para acceder más rápido desde tu pantalla de inicio</p>
+            </div>
+            <div class="install-actions">
+                <button class="btn-install" id="btnInstall">Instalar</button>
+                <button class="btn-install-cancel" id="btnInstallCancel">Ahora no</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pantalla de Login -->
+    <div class="login-screen" id="loginScreen">
+        <div class="login-container">
+            <div class="app-logo">
+                <h1>🏗️ Ferretería Carnevale</h1>
+                <p>App para Empleados</p>
+            </div>
+
+            <div class="login-tabs">
+                <button class="login-tab active" id="tabLogin">Iniciar Sesión</button>
+                <button class="login-tab" id="tabRegister">Registrarse</button>
+            </div>
+
+            <form id="loginForm" class="login-form">
+                <div class="form-group">
+                    <label for="loginEmail">Correo electrónico</label>
+                    <input type="email" id="loginEmail" class="form-control" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="loginPassword">Contraseña</label>
+                    <input type="password" id="loginPassword" class="form-control" required>
+                </div>
+                
+                <button type="submit" class="btn btn-primary">
+                    👤 Iniciar Sesión
+                </button>
+            </form>
+
+            <form id="registerForm" class="login-form hidden">
+                <div class="form-group">
+                    <label for="registerName">Nombre completo</label>
+                    <input type="text" id="registerName" class="form-control" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="registerEmail">Correo electrónico</label>
+                    <input type="email" id="registerEmail" class="form-control" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="registerPassword">Contraseña</label>
+                    <input type="password" id="registerPassword" class="form-control" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="registerConfirmPassword">Confirmar contraseña</label>
+                    <input type="password" id="registerConfirmPassword" class="form-control" required>
+                </div>
+                
+                <button type="submit" class="btn btn-success">
+                    📝 Crear Cuenta
+                </button>
+            </form>
+        </div>
+
+        <div class="app-info">
+            Versión 1.0 • Sistema de reporte de faltantes
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+        <div class="loading-text" id="loadingText">Cargando...</div>
+    </div>
+
+    <!-- Aplicación Principal -->
+    <div class="app-container" id="appContainer">
+        <!-- Header Móvil -->
+        <header class="mobile-header">
+            <div class="header-top">
+                <div class="user-info">
+                    <div class="user-avatar" id="userAvatar">U</div>
+                    <div class="user-details">
+                        <div class="user-name" id="userName">Usuario</div>
+                        <div class="user-email" id="userEmail">usuario@email.com</div>
+                    </div>
+                    <button class="btn-logout" onclick="logout()" title="Cerrar sesión">
+                        👋
+                    </button>
+                </div>
+            </div>
+            
+            <div class="sucursal-selector">
+                <div class="sucursal-info">
+                    <div class="sucursal-label">Sucursal:</div>
+                    <div class="sucursal-name" id="currentSucursal">Cargando...</div>
+                </div>
+                <button class="btn-change-sucursal" onclick="mostrarModalSucursal()" title="Cambiar sucursal">
+                    🔄
+                </button>
+            </div>
+        </header>
+
+        <!-- Navegación Móvil -->
+        <nav class="mobile-nav">
+            <button class="nav-button active" onclick="mostrarSeccion('dashboard')">
+                <span class="nav-icon">📊</span>
+                <span>Inicio</span>
+            </button>
+            <button class="nav-button" onclick="mostrarSeccion('reportar')">
+                <span class="nav-icon">⚠️</span>
+                <span>Reportar</span>
+            </button>
+            <button class="nav-button" onclick="mostrarSeccion('pendientes')">
+                <span class="nav-icon">📋</span>
+                <span>Pendientes</span>
+            </button>
+            <button class="nav-button" onclick="mostrarSeccion('config')">
+                <span class="nav-icon">⚙️</span>
+                <span>Config</span>
+            </button>
+        </nav>
+
+        <!-- Contenido Principal -->
+        <main class="main-content" id="mainContent">
+            <!-- Sección Dashboard -->
+            <section id="seccion-dashboard" class="section active">
+                <div class="instructions-card">
+                    <div class="instructions-title">
+                        <span>📝</span>
+                        <strong>¿Cómo usar esta app?</strong>
+                    </div>
+                    <ol class="instructions-list">
+                        <li>Selecciona tu sucursal en la parte superior</li>
+                        <li>Ve a "Reportar" para ingresar un faltante</li>
+                        <li>Busca el producto en el autocompletado</li>
+                        <li>Completa los datos y guarda</li>
+                        <li>Revisa "Pendientes" para ver lo reportado</li>
+                    </ol>
+                </div>
+
+                <div class="stats-card">
+                    <div class="stats-title">
+                        <span>⚠️</span>
+                        Faltantes Pendientes
+                    </div>
+                    <div class="stats-number" id="statsFaltantesPendientes">0</div>
+                    <div class="stats-subtext">En tu sucursal</div>
+                </div>
+
+                <div class="stats-card">
+                    <div class="stats-title">
+                        <span>🔴</span>
+                        Sin Stock Urgente
+                    </div>
+                    <div class="stats-number" id="statsFaltantesSinStock">0</div>
+                    <div class="stats-subtext">Requieren atención inmediata</div>
+                </div>
+
+                <div class="form-card">
+                    <h3>🚀 Acción Rápida</h3>
+                    <button class="btn btn-primary" onclick="mostrarSeccion('reportar')">
+                        ⚠️ Reportar Nuevo Faltante
+                    </button>
+                </div>
+            </section>
+
+            <!-- Sección Reportar Faltante -->
+            <section id="seccion-reportar" class="section hidden">
+                <div class="form-card">
+                    <h3>⚠️ Reportar Faltante</h3>
+                    
+                    <form id="faltanteForm" onsubmit="guardarFaltante(event)">
+                        <div class="form-group">
+                            <label for="productoBusqueda">
+                                <strong>¿Qué producto falta?</strong>
+                            </label>
+                            <div class="autocomplete-container">
+                                <input type="text" 
+                                       id="productoBusqueda" 
+                                       class="form-control" 
+                                       placeholder="Escribe el nombre del producto..." 
+                                       autocomplete="off"
+                                       required>
+                                <div id="productoDropdown" class="autocomplete-list"></div>
+                            </div>
+                            <span class="field-info">
+                                Si el producto existe, se completará automáticamente. Si no, podrás crearlo.
+                            </span>
+                        </div>
+
+                        <div id="productoInfo" class="hidden"></div>
+
+                        <div id="camposNuevoProducto" class="hidden">
+                            <div class="producto-nuevo-info">
+                                <strong>➕ Producto Nuevo</strong><br>
+                                <small>Este producto se guardará para futuros faltantes</small>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="proveedorSelect">Proveedor</label>
+                                <select id="proveedorSelect" class="form-control" required>
+                                    <option value="">Seleccionar proveedor...</option>
+                                </select>
+                            </div>
+
+                            <div id="proveedorInfo" class="proveedor-info hidden">
+                                <strong>📋 Datos del proveedor:</strong><br>
+                                <div id="proveedorDetalles"></div>
+                            </div>
+                        </div>
+
+                        <div class="form-grid-2">
+                            <div class="form-group">
+                                <label for="cantidadFaltante">Cantidad</label>
+                                <input type="number" 
+                                       id="cantidadFaltante" 
+                                       class="form-control" 
+                                       min="1" 
+                                       max="100" 
+                                       value="1"
+                                       required>
+                                <span class="field-info">Unidades que faltan</span>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="estadoStock">Estado del Stock</label>
+                                <select id="estadoStock" class="form-control" required>
+                                    <option value="Quedan Pocos">🟡 Quedan Pocos</option>
+                                    <option value="Sin Stock">🔴 Sin Stock</option>
+                                </select>
+                                <span class="field-info">Prioridad del faltante</span>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="sucursalFaltante">Sucursal</label>
+                            <select id="sucursalFaltante" class="form-control" required>
+                            </select>
+                            <span class="field-info">¿Dónde falta el producto?</span>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="observacionesFaltante">Observaciones (opcional)</label>
+                            <textarea id="observacionesFaltante" 
+                                      class="form-control" 
+                                      rows="3" 
+                                      placeholder="Notas adicionales sobre el faltante..."></textarea>
+                        </div>
+
+                        <input type="hidden" id="productoId">
+                        <input type="hidden" id="proveedorId">
+                        <input type="hidden" id="proveedorNombre">
+                        <input type="hidden" id="medioPedido">
+                        <input type="hidden" id="contactoProveedor">
+                        <input type="hidden" id="linkWebProveedor">
+
+                        <div class="form-group">
+                            <button type="submit" class="btn btn-primary">
+                                ✅ Guardar Faltante
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </section>
+
+            <!-- Sección Faltantes Pendientes -->
+            <section id="seccion-pendientes" class="section hidden">
+                <div class="form-card">
+                    <h3>📋 Faltantes Pendientes</h3>
+                    <div class="filtros-pendientes">
+                        <select id="filtroEstado" class="form-control" onchange="filtrarFaltantes()">
+                            <option value="todos">Todos los estados</option>
+                            <option value="Sin Stock">Sin Stock (urgente)</option>
+                            <option value="Quedan Pocos">Quedan Pocos</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div id="listaFaltantes" class="faltantes-list">
+                    <!-- Los faltantes se cargarán aquí -->
+                </div>
+
+                <div id="emptyFaltantes" class="empty-state hidden">
+                    <div class="empty-icon">📭</div>
+                    <h4>No hay faltantes pendientes</h4>
+                    <p>Todos los productos están disponibles en stock</p>
+                    <button class="btn btn-primary" onclick="mostrarSeccion('reportar')">
+                        ⚠️ Reportar primer faltante
+                    </button>
+                </div>
+            </section>
+
+            <!-- Sección Configuración -->
+            <section id="seccion-config" class="section hidden">
+                <div class="config-section">
+                    <h3>⚙️ Configuración</h3>
+                    
+                    <div class="form-group">
+                        <label for="configSucursal">Sucursal Predeterminada</label>
+                        <select id="configSucursal" class="form-control" onchange="cambiarSucursalConfig()">
+                        </select>
+                        <span class="field-info">Esta será tu sucursal al iniciar la app</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="configModoOffline">
+                            <input type="checkbox" id="configModoOffline"> Activar modo offline
+                        </label>
+                        <span class="field-info">Guardar datos localmente cuando no haya conexión</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="configNotificaciones">
+                            <input type="checkbox" id="configNotificaciones" checked> Recibir notificaciones
+                        </label>
+                        <span class="field-info">Alertas de confirmación y errores</span>
+                    </div>
+                </div>
+
+                <div class="config-section">
+                    <h3>📱 App</h3>
+                    
+                    <div class="form-group">
+                        <button class="btn btn-primary" onclick="sincronizarDatos()">
+                            🔄 Sincronizar Datos
+                        </button>
+                    </div>
+
+                    <div class="form-group">
+                        <button class="btn" onclick="mostrarInstalarApp()">
+                            📲 Instalar App
+                        </button>
+                        <span class="field-info">Instalar en pantalla de inicio como app nativa</span>
+                    </div>
+
+                    <div class="form-group">
+                        <button class="btn" onclick="exportarFaltantes()">
+                            📤 Exportar Reporte
+                        </button>
+                    </div>
+                </div>
+
+                <div class="config-section">
+                    <h3>📊 Información</h3>
+                    
+                    <div class="info-item">
+                        <strong>Versión:</strong> 1.0.0
+                    </div>
+                    <div class="info-item">
+                        <strong>Última sincronización:</strong> <span id="ultimaSincronizacion">-</span>
+                    </div>
+                    <div class="info-item">
+                        <strong>Productos en cache:</strong> <span id="contadorProductosCache">0</span>
+                    </div>
+                    <div class="info-item">
+                        <strong>Datos offline:</strong> <span id="estadoOffline">No</span>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Modal de Cambio de Sucursal -->
+    <div class="modal-overlay" id="modalSucursal">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3>🏪 Cambiar Sucursal</h3>
+            </div>
+            <div class="modal-body">
+                <p>Selecciona tu sucursal actual:</p>
+                <div id="listaSucursales">
+                    <!-- Las sucursales se cargarán aquí -->
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn" onclick="cerrarModalSucursal()">Cancelar</button>
+                <button class="btn btn-primary" onclick="confirmarCambioSucursal()">Confirmar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notificación Flotante -->
+    <div id="notificationContainer"></div>
+
+    <script>
+        // ============================================================================
+        // CONFIGURACIÓN DE FIREBASE
+        // ============================================================================
+        const firebaseConfig = {
+            apiKey: "AIzaSyDIvu4JsAYAwccP9yTKERIzEtli2H86lSk",
+            authDomain: "ferreteria-sistema.firebaseapp.com",
+            projectId: "ferreteria-sistema",
+            storageBucket: "ferreteria-sistema.firebasestorage.app",
+            messagingSenderId: "122400105302",
+            appId: "1:122400105302:web:589b241839d43d1971ecf7"
+        };
+
+        // Inicializar Firebase
+        try {
+            if (!firebase.apps.length) {
+                firebase.initializeApp(firebaseConfig);
+            }
+        } catch (error) {
+            console.error("Error inicializando Firebase:", error);
+            mostrarNotificacion("Error de conexión con Firebase", "error");
+        }
+
+        const db = firebase.firestore();
+        const auth = firebase.auth();
+
+        // ============================================================================
+        // VARIABLES GLOBALES
+        // ============================================================================
+        let usuarioActual = null;
+        let sucursalActual = null;
+        let productos = [];
+        let proveedores = [];
+        let faltantes = [];
+        let sucursales = ['Ferretería Carnevale', 'Ferretería Forza'];
+        
+        // Variables para cache
+        let productosCache = [];
+        let proveedoresCache = [];
+        let modoOffline = false;
+        let deferredPrompt = null;
+
+        // ============================================================================
+        // MANEJO DE PWA - INSTALACIÓN
+        // ============================================================================
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            
+            // Mostrar prompt después de 10 segundos de uso
+            setTimeout(() => {
+                if (deferredPrompt && localStorage.getItem('installPromptShown') !== 'true') {
+                    mostrarInstalarApp();
+                }
+            }, 10000);
+        });
+
+        function mostrarInstalarApp() {
+            if (deferredPrompt) {
+                document.getElementById('installPrompt').classList.add('show');
+                localStorage.setItem('installPromptShown', 'true');
+            } else {
+                mostrarNotificacion("Esta app ya está instalada o no se puede instalar", "warning");
+            }
+        }
+
+        document.getElementById('btnInstall').addEventListener('click', async () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                
+                if (outcome === 'accepted') {
+                    mostrarNotificacion("¡App instalada correctamente!", "success");
+                }
+                
+                deferredPrompt = null;
+                document.getElementById('installPrompt').classList.remove('show');
+            }
+        });
+
+        document.getElementById('btnInstallCancel').addEventListener('click', () => {
+            document.getElementById('installPrompt').classList.remove('show');
+        });
+
+        // ============================================================================
+        // MANEJO DE CONEXIÓN OFFLINE
+        // ============================================================================
+        window.addEventListener('online', actualizarEstadoConexion);
+        window.addEventListener('offline', actualizarEstadoConexion);
+
+        function actualizarEstadoConexion() {
+            const offlineIndicator = document.getElementById('offlineIndicator');
+            
+            if (!navigator.onLine) {
+                offlineIndicator.classList.add('active');
+                modoOffline = true;
+                mostrarNotificacion("Modo offline activado", "warning");
+                cargarDatosDesdeCache();
+            } else {
+                offlineIndicator.classList.remove('active');
+                modoOffline = false;
+                mostrarNotificacion("Conexión restablecida", "success");
+                
+                // Sincronizar datos pendientes
+                sincronizarDatosPendientes();
+            }
+            
+            document.getElementById('estadoOffline').textContent = modoOffline ? "Sí" : "No";
+        }
+
+        // ============================================================================
+        // CACHE LOCAL - LOCALSTORAGE
+        // ============================================================================
+        function guardarEnCache(clave, datos) {
+            try {
+                localStorage.setItem(clave, JSON.stringify(datos));
+                return true;
+            } catch (e) {
+                console.error("Error guardando en cache:", e);
+                return false;
+            }
+        }
+
+        function cargarDesdeCache(clave) {
+            try {
+                const datos = localStorage.getItem(clave);
+                return datos ? JSON.parse(datos) : null;
+            } catch (e) {
+                console.error("Error cargando desde cache:", e);
+                return null;
+            }
+        }
+
+        function cargarDatosDesdeCache() {
+            productosCache = cargarDesdeCache('productosCache') || [];
+            proveedoresCache = cargarDesdeCache('proveedoresCache') || [];
+            
+            document.getElementById('contadorProductosCache').textContent = productosCache.length;
+            
+            if (productosCache.length > 0) {
+                productos = productosCache;
+                configurarAutocompletadoProductos();
+            }
+        }
+
+        function sincronizarDatosPendientes() {
+            const pendientes = cargarDesdeCache('faltantesPendientes') || [];
+            
+            if (pendientes.length > 0 && usuarioActual) {
+                mostrarLoading(true, "Sincronizando datos pendientes...");
+                
+                pendientes.forEach(async (faltante) => {
+                    try {
+                        await db.collection('faltantes').add(faltante);
+                    } catch (error) {
+                        console.error("Error sincronizando faltante:", error);
+                    }
+                });
+                
+                localStorage.removeItem('faltantesPendientes');
+                mostrarLoading(false);
+                mostrarNotificacion(`${pendientes.length} faltantes sincronizados`, "success");
+            }
+        }
+
+        // ============================================================================
+        // NOTIFICACIONES
+        // ============================================================================
+        function mostrarNotificacion(mensaje, tipo = 'success', duracion = 4000) {
+            // Remover notificaciones anteriores
+            document.querySelectorAll('.notification').forEach(n => {
+                if (n.parentNode) n.parentNode.removeChild(n);
+            });
+            
+            const notification = document.createElement('div');
+            notification.className = `notification ${tipo}`;
+            notification.innerHTML = `
+                <span>${mensaje}</span>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // Auto-remover después de la duración
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.parentNode.removeChild(notification);
+                }
+            }, duracion);
+            
+            return notification;
+        }
+
+        // ============================================================================
+        // LOADING OVERLAY
+        // ============================================================================
+        function mostrarLoading(mostrar = true, mensaje = 'Cargando...') {
+            const overlay = document.getElementById('loadingOverlay');
+            const texto = document.getElementById('loadingText');
+            
+            if (texto && mensaje) {
+                texto.textContent = mensaje;
+            }
+            
+            if (overlay) {
+                if (mostrar) {
+                    overlay.classList.add('active');
+                } else {
+                    overlay.classList.remove('active');
+                }
+            }
+        }
+
+        // ============================================================================
+        // AUTENTICACIÓN
+        // ============================================================================
+        document.getElementById('tabLogin').addEventListener('click', () => {
+            document.querySelectorAll('.login-tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.login-form').forEach(form => form.classList.add('hidden'));
+            
+            document.getElementById('tabLogin').classList.add('active');
+            document.getElementById('loginForm').classList.remove('hidden');
+        });
+
+        document.getElementById('tabRegister').addEventListener('click', () => {
+            document.querySelectorAll('.login-tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.login-form').forEach(form => form.classList.add('hidden'));
+            
+            document.getElementById('tabRegister').classList.add('active');
+            document.getElementById('registerForm').classList.remove('hidden');
+        });
+
+        // Login
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            mostrarLoading(true, 'Iniciando sesión...');
+            
+            try {
+                const userCredential = await auth.signInWithEmailAndPassword(email, password);
+                usuarioActual = userCredential.user;
+                await inicializarApp();
+                
+            } catch (error) {
+                let mensaje = 'Error al iniciar sesión';
+                
+                if (error.code === 'auth/user-not-found') {
+                    mensaje = 'Usuario no encontrado';
+                } else if (error.code === 'auth/wrong-password') {
+                    mensaje = 'Contraseña incorrecta';
+                } else if (error.code === 'auth/network-request-failed') {
+                    mensaje = 'Error de conexión. Verifica tu internet';
+                }
+                
+                mostrarNotificacion(mensaje, 'error');
+                mostrarLoading(false);
+            }
+        });
+
+        // Registro
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const nombre = document.getElementById('registerName').value;
+            const email = document.getElementById('registerEmail').value;
+            const password = document.getElementById('registerPassword').value;
+            const confirmPassword = document.getElementById('registerConfirmPassword').value;
+            
+            if (password !== confirmPassword) {
+                mostrarNotificacion('Las contraseñas no coinciden', 'error');
+                return;
+            }
+            
+            if (password.length < 6) {
+                mostrarNotificacion('La contraseña debe tener al menos 6 caracteres', 'error');
+                return;
+            }
+            
+            mostrarLoading(true, 'Creando cuenta...');
+            
+            try {
+                const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+                usuarioActual = userCredential.user;
+                
+                // Guardar usuario en Firestore
+                await db.collection('usuarios').doc(usuarioActual.uid).set({
+                    email: usuarioActual.email,
+                    nombre: nombre,
+                    rol: 'empleado',
+                    fechaRegistro: firebase.firestore.FieldValue.serverTimestamp(),
+                    sucursal: sucursalActual || sucursales[0]
+                });
+                
+                await inicializarApp();
+                
+            } catch (error) {
+                let mensaje = 'Error al crear cuenta';
+                
+                if (error.code === 'auth/email-already-in-use') {
+                    mensaje = 'El email ya está en uso';
+                } else if (error.code === 'auth/weak-password') {
+                    mensaje = 'La contraseña es muy débil';
+                }
+                
+                mostrarNotificacion(mensaje, 'error');
+                mostrarLoading(false);
+            }
+        });
+
+        async function verificarUsuarioEnFirestore(user) {
+            try {
+                const userDoc = await db.collection('usuarios').doc(user.uid).get();
+                
+                if (!userDoc.exists) {
+                    // Crear documento de usuario si no existe
+                    await db.collection('usuarios').doc(user.uid).set({
+                        email: user.email,
+                        nombre: user.email.split('@')[0],
+                        rol: 'empleado',
+                        fechaRegistro: firebase.firestore.FieldValue.serverTimestamp(),
+                        sucursal: sucursales[0]
+                    });
+                    
+                    return { id: user.uid, email: user.email, nombre: user.email.split('@')[0], rol: 'empleado', sucursal: sucursales[0] };
+                }
+                
+                return { id: userDoc.id, ...userDoc.data() };
+            } catch (error) {
+                console.error('Error verificando usuario:', error);
+                return null;
+            }
+        }
+
+        function logout() {
+            if (confirm('¿Cerrar sesión?')) {
+                mostrarLoading(true, 'Cerrando sesión...');
+                
+                auth.signOut().then(() => {
+                    usuarioActual = null;
+                    document.getElementById('loginScreen').style.display = 'flex';
+                    document.getElementById('appContainer').style.display = 'none';
+                    mostrarNotificacion('Sesión cerrada correctamente', 'success');
+                }).catch(error => {
+                    console.error('Error al cerrar sesión:', error);
+                    mostrarNotificacion('Error al cerrar sesión', 'error');
+                }).finally(() => {
+                    mostrarLoading(false);
+                });
+            }
+        }
+
+        // Observador de autenticación
+        auth.onAuthStateChanged(async (user) => {
+            if (user) {
+                usuarioActual = user;
+                await inicializarApp();
+            } else {
+                document.getElementById('loginScreen').style.display = 'flex';
+                document.getElementById('appContainer').style.display = 'none';
+            }
+        });
+
+        // ============================================================================
+        // INICIALIZACIÓN DE LA APLICACIÓN
+        // ============================================================================
+        async function inicializarApp() {
+            try {
+                // Obtener datos del usuario
+                const userData = await verificarUsuarioEnFirestore(usuarioActual);
+                
+                if (!userData) {
+                    throw new Error('No se pudieron cargar los datos del usuario');
+                }
+                
+                // Configurar interfaz de usuario
+                document.getElementById('loginScreen').style.display = 'none';
+                document.getElementById('appContainer').style.display = 'block';
+                
+                document.getElementById('userName').textContent = userData.nombre || 'Usuario';
+                document.getElementById('userEmail').textContent = usuarioActual.email;
+                
+                // Avatar con iniciales
+                const avatar = document.getElementById('userAvatar');
+                const initials = userData.nombre ? userData.nombre.charAt(0).toUpperCase() : 'U';
+                avatar.textContent = initials;
+                
+                // Cargar sucursal
+                sucursalActual = userData.sucursal || sucursales[0];
+                document.getElementById('currentSucursal').textContent = sucursalActual;
+                
+                // Actualizar selects de sucursal
+                actualizarSelectSucursales();
+                
+                // Cargar datos iniciales
+                await cargarDatosIniciales();
+                
+                // Mostrar sección dashboard
+                mostrarSeccion('dashboard');
+                
+                // Verificar conexión
+                actualizarEstadoConexion();
+                
+                mostrarNotificacion(`Bienvenido ${userData.nombre}`, 'success');
+                
+            } catch (error) {
+                console.error('Error inicializando app:', error);
+                mostrarNotificacion('Error cargando la aplicación', 'error');
+                auth.signOut();
+            } finally {
+                mostrarLoading(false);
+            }
+        }
+
+        // ============================================================================
+        // CARGA DE DATOS
+        // ============================================================================
+        async function cargarDatosIniciales() {
+            mostrarLoading(true, 'Cargando datos...');
+            
+            try {
+                // Cargar productos (limitado a 200 para móvil)
+                const productosSnapshot = await db.collection('productos')
+                    .where('activo', '==', true)
+                    .orderBy('nombre')
+                    .limit(200)
+                    .get();
+                
+                productos = [];
+                productosSnapshot.forEach(doc => {
+                    productos.push({ id: doc.id, ...doc.data() });
+                });
+                
+                // Guardar en cache
+                guardarEnCache('productosCache', productos);
+                document.getElementById('contadorProductosCache').textContent = productos.length;
+                
+                // Cargar proveedores
+                const proveedoresSnapshot = await db.collection('proveedores')
+                    .where('activo', '==', true)
+                    .limit(100)
+                    .get();
+                
+                proveedores = [];
+                proveedoresSnapshot.forEach(doc => {
+                    proveedores.push({ id: doc.id, ...doc.data() });
+                });
+                
+                // Configurar autocompletado
+                configurarAutocompletadoProductos();
+                actualizarSelectProveedores();
+                
+                // Cargar faltantes pendientes de la sucursal actual
+                await cargarFaltantesPendientes();
+                
+                // Actualizar última sincronización
+                const ahora = new Date();
+                document.getElementById('ultimaSincronizacion').textContent = 
+                    ahora.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
+                
+            } catch (error) {
+                console.error('Error cargando datos:', error);
+                
+                // Intentar cargar desde cache
+                cargarDatosDesdeCache();
+                
+                if (modoOffline) {
+                    mostrarNotificacion('Usando datos en cache (modo offline)', 'warning');
+                } else {
+                    mostrarNotificacion('Error cargando datos, usando cache', 'error');
+                }
+            } finally {
+                mostrarLoading(false);
+            }
+        }
+
+        async function cargarFaltantesPendientes() {
+            try {
+                const snapshot = await db.collection('faltantes')
+                    .where('sucursal', '==', sucursalActual)
+                    .where('estadoFaltante', '==', 'Pendiente')
+                    .orderBy('fechaReporte', 'desc')
+                    .limit(50)
+                    .get();
+                
+                faltantes = [];
+                snapshot.forEach(doc => {
+                    faltantes.push({ id: doc.id, ...doc.data() });
+                });
+                
+                // Actualizar estadísticas
+                actualizarEstadisticas();
+                
+                // Actualizar lista de faltantes
+                actualizarListaFaltantes();
+                
+            } catch (error) {
+                console.error('Error cargando faltantes:', error);
+            }
+        }
+
+        function actualizarEstadisticas() {
+            const faltantesPendientes = faltantes.length;
+            const faltantesSinStock = faltantes.filter(f => f.estadoStock === 'Sin Stock').length;
+            
+            document.getElementById('statsFaltantesPendientes').textContent = faltantesPendientes;
+            document.getElementById('statsFaltantesSinStock').textContent = faltantesSinStock;
+        }
+
+        // ============================================================================
+        // NAVEGACIÓN
+        // ============================================================================
+        function mostrarSeccion(seccionId) {
+            // Ocultar todas las secciones
+            document.querySelectorAll('.section').forEach(section => {
+                section.classList.add('hidden');
+                section.classList.remove('active');
+            });
+            
+            // Remover active de todos los botones
+            document.querySelectorAll('.nav-button').forEach(button => {
+                button.classList.remove('active');
+            });
+            
+            // Mostrar sección seleccionada
+            const seccion = document.getElementById(`seccion-${seccionId}`);
+            if (seccion) {
+                seccion.classList.remove('hidden');
+                seccion.classList.add('active');
+            }
+            
+            // Activar botón correspondiente
+            const buttons = document.querySelectorAll('.nav-button');
+            buttons.forEach((button, index) => {
+                if (index === 0 && seccionId === 'dashboard') button.classList.add('active');
+                if (index === 1 && seccionId === 'reportar') button.classList.add('active');
+                if (index === 2 && seccionId === 'pendientes') button.classList.add('active');
+                if (index === 3 && seccionId === 'config') button.classList.add('active');
+            });
+        }
+
+        // ============================================================================
+        // GESTIÓN DE SUCURSALES
+        // ============================================================================
+        function actualizarSelectSucursales() {
+            const selectFaltante = document.getElementById('sucursalFaltante');
+            const selectConfig = document.getElementById('configSucursal');
+            
+            if (selectFaltante && selectConfig) {
+                selectFaltante.innerHTML = '';
+                selectConfig.innerHTML = '';
+                
+                sucursales.forEach(sucursal => {
+                    const option1 = document.createElement('option');
+                    option1.value = sucursal;
+                    option1.textContent = sucursal;
+                    if (sucursal === sucursalActual) option1.selected = true;
+                    selectFaltante.appendChild(option1);
+                    
+                    const option2 = document.createElement('option');
+                    option2.value = sucursal;
+                    option2.textContent = sucursal;
+                    if (sucursal === sucursalActual) option2.selected = true;
+                    selectConfig.appendChild(option2);
+                });
+            }
+        }
+
+        function mostrarModalSucursal() {
+            const listaSucursales = document.getElementById('listaSucursales');
+            listaSucursales.innerHTML = '';
+            
+            sucursales.forEach(sucursal => {
+                const div = document.createElement('div');
+                div.className = `sucursal-option ${sucursal === sucursalActual ? 'active' : ''}`;
+                div.innerHTML = `
+                    <div class="sucursal-name">${sucursal}</div>
+                    <div class="sucursal-description">Seleccionar como sucursal actual</div>
+                `;
+                
+                div.addEventListener('click', () => {
+                    document.querySelectorAll('.sucursal-option').forEach(opt => {
+                        opt.classList.remove('active');
+                    });
+                    div.classList.add('active');
+                });
+                
+                listaSucursales.appendChild(div);
+            });
+            
+            document.getElementById('modalSucursal').classList.add('active');
+        }
+
+        function cerrarModalSucursal() {
+            document.getElementById('modalSucursal').classList.remove('active');
+        }
+
+        async function confirmarCambioSucursal() {
+            const seleccionada = document.querySelector('.sucursal-option.active .sucursal-name').textContent;
+            
+            if (seleccionada !== sucursalActual) {
+                sucursalActual = seleccionada;
+                
+                // Actualizar UI
+                document.getElementById('currentSucursal').textContent = sucursalActual;
+                actualizarSelectSucursales();
+                
+                // Actualizar en Firestore
+                if (usuarioActual) {
+                    try {
+                        await db.collection('usuarios').doc(usuarioActual.uid).update({
+                            sucursal: sucursalActual
+                        });
+                    } catch (error) {
+                        console.error('Error actualizando sucursal:', error);
+                    }
+                }
+                
+                // Recargar faltantes de la nueva sucursal
+                await cargarFaltantesPendientes();
+                
+                mostrarNotificacion(`Sucursal cambiada a: ${sucursalActual}`, 'success');
+            }
+            
+            cerrarModalSucursal();
+        }
+
+        function cambiarSucursalConfig() {
+            const select = document.getElementById('configSucursal');
+            if (select.value && select.value !== sucursalActual) {
+                sucursalActual = select.value;
+                document.getElementById('currentSucursal').textContent = sucursalActual;
+                cargarFaltantesPendientes();
+                mostrarNotificacion(`Sucursal predeterminada cambiada a: ${sucursalActual}`, 'success');
+            }
+        }
+
+        // ============================================================================
+        // AUTOCOMPLETADO DE PRODUCTOS
+        // ============================================================================
+        function configurarAutocompletadoProductos() {
+            const inputProducto = document.getElementById('productoBusqueda');
+            const dropdown = document.getElementById('productoDropdown');
+            
+            if (!inputProducto) return;
+            
+            inputProducto.addEventListener('input', function(e) {
+                const valor = e.target.value.trim().toLowerCase();
+                mostrarResultadosAutocompletado(valor);
+            });
+            
+            inputProducto.addEventListener('focus', function() {
+                if (this.value.trim().length >= 2) {
+                    mostrarResultadosAutocompletado(this.value.trim().toLowerCase());
+                }
+            });
+            
+            document.addEventListener('click', (e) => {
+                if (!inputProducto.contains(e.target) && !dropdown.contains(e.target)) {
+                    dropdown.classList.remove('active');
+                }
+            });
+        }
+
+        function mostrarResultadosAutocompletado(valor) {
+            const dropdown = document.getElementById('productoDropdown');
+            if (!dropdown) return;
+            
+            dropdown.innerHTML = '';
+            
+            if (!valor || valor.length < 2) {
+                dropdown.classList.remove('active');
+                return;
+            }
+            
+            const resultados = productos.filter(producto => {
+                if (!producto.nombre) return false;
+                return producto.nombre.toLowerCase().includes(valor);
+            }).slice(0, 8);
+            
+            if (resultados.length === 0) {
+                // Producto no encontrado - mostrar opción para crear nuevo
+                const item = document.createElement('div');
+                item.className = 'autocomplete-item';
+                item.innerHTML = `
+                    <strong>➕ Crear nuevo producto: "${valor}"</strong><br>
+                    <small>Este producto no existe en el sistema</small>
+                `;
+                
+                item.addEventListener('click', () => {
+                    document.getElementById('productoBusqueda').value = valor;
+                    mostrarCamposNuevoProducto(valor);
+                    dropdown.classList.remove('active');
+                });
+                
+                dropdown.appendChild(item);
+            } else {
+                resultados.forEach(producto => {
+                    const item = document.createElement('div');
+                    item.className = 'autocomplete-item';
+                    item.innerHTML = `
+                        <strong>${producto.nombre}</strong><br>
+                        <small>${producto.proveedor || 'Sin proveedor'} • ${producto.medio || 'WhatsApp'}</small>
+                    `;
+                    
+                    item.addEventListener('click', () => {
+                        seleccionarProductoExistente(producto);
+                        dropdown.classList.remove('active');
+                    });
+                    
+                    dropdown.appendChild(item);
+                });
+            }
+            
+            dropdown.classList.add('active');
+        }
+
+        function seleccionarProductoExistente(producto) {
+            document.getElementById('productoBusqueda').value = producto.nombre;
+            document.getElementById('productoId').value = producto.id;
+            document.getElementById('proveedorNombre').value = producto.proveedor || '';
+            document.getElementById('medioPedido').value = producto.medio || 'WhatsApp';
+            document.getElementById('contactoProveedor').value = producto.contacto || '';
+            document.getElementById('linkWebProveedor').value = producto.linkWeb || '';
+            
+            // Ocultar campos de nuevo producto
+            document.getElementById('camposNuevoProducto').classList.add('hidden');
+            
+            // Mostrar información del producto
+            const productoInfo = document.getElementById('productoInfo');
+            productoInfo.classList.remove('hidden');
+            productoInfo.innerHTML = `
+                <div class="producto-nuevo-info">
+                    <strong>✅ Producto encontrado</strong><br>
+                    <small>Proveedor: ${producto.proveedor || 'Sin proveedor'} • Medio: ${producto.medio || 'WhatsApp'}</small>
+                </div>
+            `;
+        }
+
+        function mostrarCamposNuevoProducto(nombreProducto) {
+            document.getElementById('productoId').value = '';
+            document.getElementById('productoBusqueda').value = nombreProducto;
+            
+            document.getElementById('productoInfo').classList.add('hidden');
+            document.getElementById('camposNuevoProducto').classList.remove('hidden');
+            document.getElementById('proveedorInfo').classList.add('hidden');
+        }
+
+        // ============================================================================
+        // SELECT DE PROVEEDORES
+        // ============================================================================
+        function actualizarSelectProveedores() {
+            const select = document.getElementById('proveedorSelect');
+            if (!select || proveedores.length === 0) return;
+            
+            select.innerHTML = '<option value="">Seleccionar proveedor...</option>';
+            
+            proveedores.forEach(proveedor => {
+                const option = document.createElement('option');
+                option.value = proveedor.id;
+                option.textContent = proveedor.nombre || 'Sin nombre';
+                option.dataset.medio = proveedor.medio || 'WhatsApp';
+                option.dataset.contacto = proveedor.contacto || '';
+                option.dataset.linkweb = proveedor.linkWeb || '';
+                select.appendChild(option);
+            });
+            
+            select.addEventListener('change', function() {
+                const selectedOption = this.options[this.selectedIndex];
+                
+                if (selectedOption.value) {
+                    const proveedorInfo = document.getElementById('proveedorInfo');
+                    const proveedorDetalles = document.getElementById('proveedorDetalles');
+                    
+                    proveedorDetalles.innerHTML = `
+                        <strong>Medio:</strong> ${selectedOption.dataset.medio || 'WhatsApp'}<br>
+                        <strong>Contacto:</strong> ${selectedOption.dataset.contacto || 'No especificado'}
+                        ${selectedOption.dataset.linkweb ? `<br><strong>Web:</strong> ${selectedOption.dataset.linkweb}` : ''}
+                    `;
+                    
+                    proveedorInfo.classList.remove('hidden');
+                } else {
+                    document.getElementById('proveedorInfo').classList.add('hidden');
+                }
+            });
+        }
+
+        // ============================================================================
+        // GUARDAR FALTANTE
+        // ============================================================================
+        async function guardarFaltante(event) {
+            event.preventDefault();
+            
+            if (!usuarioActual) {
+                mostrarNotificacion('Debes iniciar sesión', 'error');
+                return;
+            }
+            
+            const productoNombre = document.getElementById('productoBusqueda').value.trim();
+            const productoId = document.getElementById('productoId').value;
+            const proveedorId = document.getElementById('proveedorSelect').value;
+            const cantidad = parseInt(document.getElementById('cantidadFaltante').value) || 1;
+            const estadoStock = document.getElementById('estadoStock').value;
+            const sucursal = document.getElementById('sucursalFaltante').value;
+            const observaciones = document.getElementById('observacionesFaltante').value.trim();
+            
+            // Validaciones
+            if (!productoNombre) {
+                mostrarNotificacion('El nombre del producto es requerido', 'error');
+                return;
+            }
+            
+            if (!productoId && !proveedorId) {
+                mostrarNotificacion('Debes seleccionar un proveedor para productos nuevos', 'error');
+                return;
+            }
+            
+            if (!sucursal) {
+                mostrarNotificacion('La sucursal es requerida', 'error');
+                return;
+            }
+            
+            mostrarLoading(true, 'Guardando faltante...');
+            
+            try {
+                let proveedorNombre, medioPedido, contactoProveedor, linkWebProveedor;
+                
+                if (productoId) {
+                    // Producto existente
+                    proveedorNombre = document.getElementById('proveedorNombre').value;
+                    medioPedido = document.getElementById('medioPedido').value;
+                    contactoProveedor = document.getElementById('contactoProveedor').value;
+                    linkWebProveedor = document.getElementById('linkWebProveedor').value;
+                } else {
+                    // Producto nuevo - obtener datos del proveedor seleccionado
+                    const proveedor = proveedores.find(p => p.id === proveedorId);
+                    if (!proveedor) {
+                        throw new Error('Proveedor no encontrado');
+                    }
+                    
+                    proveedorNombre = proveedor.nombre;
+                    medioPedido = proveedor.medio || 'WhatsApp';
+                    contactoProveedor = proveedor.contacto || '';
+                    linkWebProveedor = proveedor.linkWeb || '';
+                    
+                    // Crear el nuevo producto en Firestore
+                    const productoData = {
+                        nombre: productoNombre,
+                        proveedor: proveedorNombre,
+                        medio: medioPedido,
+                        contacto: contactoProveedor,
+                        linkWeb: linkWebProveedor,
+                        activo: true,
+                        fechaCreacion: firebase.firestore.FieldValue.serverTimestamp(),
+                        fechaActualizacion: firebase.firestore.FieldValue.serverTimestamp()
+                    };
+                    
+                    const productoRef = await db.collection('productos').add(productoData);
+                    
+                    // Agregar a la lista local y cache
+                    productos.push({ id: productoRef.id, ...productoData });
+                    guardarEnCache('productosCache', productos);
+                    
+                    document.getElementById('contadorProductosCache').textContent = productos.length;
+                }
+                
+                // Datos del faltante
+                const faltanteData = {
+                    sucursal: sucursal,
+                    producto: productoNombre,
+                    proveedor: proveedorNombre,
+                    medio: medioPedido,
+                    contacto: contactoProveedor,
+                    linkWeb: linkWebProveedor,
+                    cantidad: cantidad,
+                    estadoStock: estadoStock,
+                    estadoFaltante: 'Pendiente',
+                    observaciones: observaciones || '',
+                    fechaReporte: firebase.firestore.FieldValue.serverTimestamp(),
+                    usuarioReporte: usuarioActual.email,
+                    fechaPedido: null,
+                    idPedido: null
+                };
+                
+                // Verificar si ya existe un faltante similar pendiente
+                const existeFaltante = faltantes.some(f => 
+                    f.producto === productoNombre && 
+                    f.proveedor === proveedorNombre && 
+                    f.sucursal === sucursal && 
+                    f.estadoFaltante === 'Pendiente'
+                );
+                
+                if (existeFaltante) {
+                    mostrarLoading(false);
+                    mostrarNotificacion('Ya existe un faltante pendiente para este producto', 'error');
+                    return;
+                }
+                
+                if (modoOffline) {
+                    // Guardar en cache para sincronización posterior
+                    const pendientes = cargarDesdeCache('faltantesPendientes') || [];
+                    pendientes.push(faltanteData);
+                    guardarEnCache('faltantesPendientes', pendientes);
+                    
+                    // Agregar a la lista local
+                    faltantes.unshift({ id: `offline-${Date.now()}`, ...faltanteData });
+                    
+                    mostrarNotificacion('Faltante guardado en modo offline', 'warning');
+                } else {
+                    // Guardar en Firestore
+                    await db.collection('faltantes').add(faltanteData);
+                    
+                    // Agregar a la lista local
+                    faltantes.unshift({ id: 'temp', ...faltanteData });
+                    
+                    mostrarNotificacion('Faltante reportado correctamente', 'success');
+                }
+                
+                // Limpiar formulario
+                limpiarFormularioFaltante();
+                
+                // Actualizar estadísticas y lista
+                actualizarEstadisticas();
+                actualizarListaFaltantes();
+                
+                // Registrar log
+                await registrarLog('Reportar Faltante', productoNombre);
+                
+            } catch (error) {
+                console.error('Error guardando faltante:', error);
+                mostrarNotificacion(`Error: ${error.message}`, 'error');
+            } finally {
+                mostrarLoading(false);
+            }
+        }
+
+        function limpiarFormularioFaltante() {
+            document.getElementById('faltanteForm').reset();
+            document.getElementById('productoBusqueda').value = '';
+            document.getElementById('productoId').value = '';
+            document.getElementById('productoInfo').classList.add('hidden');
+            document.getElementById('camposNuevoProducto').classList.add('hidden');
+            document.getElementById('proveedorInfo').classList.add('hidden');
+            document.getElementById('observacionesFaltante').value = '';
+            
+            // Restaurar valores por defecto
+            document.getElementById('cantidadFaltante').value = '1';
+            document.getElementById('estadoStock').value = 'Quedan Pocos';
+            document.getElementById('sucursalFaltante').value = sucursalActual;
+        }
+
+        // ============================================================================
+        // LISTA DE FALTANTES PENDIENTES
+        // ============================================================================
+        function actualizarListaFaltantes() {
+            const lista = document.getElementById('listaFaltantes');
+            const emptyState = document.getElementById('emptyFaltantes');
+            
+            if (!lista) return;
+            
+            // Aplicar filtro
+            const filtroEstado = document.getElementById('filtroEstado')?.value || 'todos';
+            let faltantesFiltrados = faltantes;
+            
+            if (filtroEstado !== 'todos') {
+                faltantesFiltrados = faltantes.filter(f => f.estadoStock === filtroEstado);
+            }
+            
+            if (faltantesFiltrados.length === 0) {
+                lista.innerHTML = '';
+                emptyState.classList.remove('hidden');
+                return;
+            }
+            
+            emptyState.classList.add('hidden');
+            
+            let html = '';
+            faltantesFiltrados.forEach(faltante => {
+                const fecha = faltante.fechaReporte ? 
+                    (faltante.fechaReporte.toDate ? 
+                        faltante.fechaReporte.toDate().toLocaleDateString('es-AR') : 
+                        new Date(faltante.fechaReporte).toLocaleDateString('es-AR')) : 
+                    'Hoy';
+                
+                html += `
+                    <div class="faltante-item ${faltante.estadoStock === 'Sin Stock' ? 'sin-stock' : ''}">
+                        <div class="faltante-header">
+                            <div class="faltante-producto">${faltante.producto}</div>
+                            <div class="faltante-fecha">${fecha}</div>
+                        </div>
+                        <div class="faltante-detalle">
+                            <strong>Cantidad:</strong> ${faltante.cantidad} unidades<br>
+                            <strong>Proveedor:</strong> ${faltante.proveedor || 'No especificado'}
+                            ${faltante.observaciones ? `<br><strong>Observaciones:</strong> ${faltante.observaciones}` : ''}
+                        </div>
+                        <div class="faltante-sucursal">${faltante.sucursal}</div>
+                        <div class="faltante-estado">${faltante.estadoStock}</div>
+                    </div>
+                `;
+            });
+            
+            lista.innerHTML = html;
+        }
+
+        function filtrarFaltantes() {
+            actualizarListaFaltantes();
+        }
+
+        // ============================================================================
+        // FUNCIONES UTILITARIAS
+        // ============================================================================
+        async function sincronizarDatos() {
+            mostrarLoading(true, 'Sincronizando...');
+            
+            try {
+                await cargarDatosIniciales();
+                await sincronizarDatosPendientes();
+                
+                mostrarNotificacion('Datos sincronizados correctamente', 'success');
+            } catch (error) {
+                console.error('Error sincronizando:', error);
+                mostrarNotificacion('Error sincronizando datos', 'error');
+            } finally {
+                mostrarLoading(false);
+            }
+        }
+
+        function exportarFaltantes() {
+            const datos = {
+                sucursal: sucursalActual,
+                fecha: new Date().toISOString(),
+                faltantes: faltantes.map(f => ({
+                    producto: f.producto,
+                    cantidad: f.cantidad,
+                    estadoStock: f.estadoStock,
+                    fechaReporte: f.fechaReporte ? 
+                        (f.fechaReporte.toDate ? 
+                            f.fechaReporte.toDate().toISOString() : 
+                            f.fechaReporte) : 
+                        new Date().toISOString(),
+                    observaciones: f.observaciones || ''
+                }))
+            };
+            
+            const datosJSON = JSON.stringify(datos, null, 2);
+            const blob = new Blob([datosJSON], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `faltantes_${sucursalActual.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            mostrarNotificacion('Reporte exportado correctamente', 'success');
+        }
+
+        async function registrarLog(accion, detalle) {
+            try {
+                await db.collection('logs').add({
+                    fecha: firebase.firestore.FieldValue.serverTimestamp(),
+                    usuario: usuarioActual.email,
+                    accion: accion,
+                    detalle: detalle,
+                    sucursal: sucursalActual,
+                    tipo: 'app-movil'
+                });
+            } catch (error) {
+                console.error('Error registrando log:', error);
+            }
+        }
+
+        // ============================================================================
+        // INICIALIZACIÓN AL CARGAR LA PÁGINA
+        // ============================================================================
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('App para empleados cargada');
+            
+            // Verificar si ya hay un usuario logueado
+            if (auth.currentUser) {
+                usuarioActual = auth.currentUser;
+                inicializarApp();
+            }
+            
+            // Configurar checkboxes de configuración
+            const configModoOffline = document.getElementById('configModoOffline');
+            const configNotificaciones = document.getElementById('configNotificaciones');
+            
+            if (configModoOffline) {
+                configModoOffline.checked = localStorage.getItem('modoOffline') === 'true';
+                configModoOffline.addEventListener('change', function() {
+                    localStorage.setItem('modoOffline', this.checked);
+                });
+            }
+            
+            if (configNotificaciones) {
+                configNotificaciones.checked = localStorage.getItem('notificaciones') !== 'false';
+                configNotificaciones.addEventListener('change', function() {
+                    localStorage.setItem('notificaciones', this.checked);
+                });
+            }
+        });
+
+        // ============================================================================
+        // EXPORTAR FUNCIONES AL ÁMBITO GLOBAL
+        // ============================================================================
+        window.mostrarSeccion = mostrarSeccion;
+        window.logout = logout;
+        window.mostrarModalSucursal = mostrarModalSucursal;
+        window.cerrarModalSucursal = cerrarModalSucursal;
+        window.confirmarCambioSucursal = confirmarCambioSucursal;
+        window.cambiarSucursalConfig = cambiarSucursalConfig;
+        window.guardarFaltante = guardarFaltante;
+        window.filtrarFaltantes = filtrarFaltantes;
+        window.sincronizarDatos = sincronizarDatos;
+        window.exportarFaltantes = exportarFaltantes;
+        window.mostrarInstalarApp = mostrarInstalarApp;
+    </script>
+</body>
+</html>
