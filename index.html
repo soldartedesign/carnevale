@@ -2930,8 +2930,8 @@
                 ultimos30Dias.setDate(ultimos30Dias.getDate() - 30);
                 
                 // LÍMITES EXPLÍCITOS PARA REDUCIR CONSUMO
-                const LIMITE_FALTANTES = 100; // Reducido de 500
-                const LIMITE_PEDIDOS = 50;    // Reducido de 200
+                const LIMITE_FALTANTES = 500; // Reducido de 500
+                const LIMITE_PEDIDOS = 200;    // Reducido de 200
                 
                 // 1. Faltantes actuales con validación
                 const faltantesActuales = (faltantes || []).filter(f => {
@@ -3244,7 +3244,6 @@
                     <div class="text-center">
                         <div class="spinner" style="width: 30px; height: 30px; margin: 0 auto;"></div>
                         <p class="mt-2">📊 Analizando inventario...</p>
-                        <p><small>Consumo estimado: ~500 lecturas de Firebase</small></p>
                     </div>
                 `;
                 
